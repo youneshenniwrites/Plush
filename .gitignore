@@ -1,0 +1,11 @@
+amplify
+build/
+dist/
+node_modules/
+aws-exports.js
+awsconfiguration.json
+yarn-error.log
+yarn.lock
+.expo
+babel.congif.js
+.watchmanconfig
