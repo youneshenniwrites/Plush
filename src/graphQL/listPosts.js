@@ -5,7 +5,9 @@ const listPosts = gql`
     listPosts {
       items {
         id
-        name
+        postContent
+        postOwnerUsername
+        postOwnerId
       }
     }
   }

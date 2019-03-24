@@ -35,6 +35,7 @@ class Feed extends React.Component {
     posts: [],
     postOwnerId: '',
     postOwnerUsername: '',
+    postContent: ''
   }
 
   componentDidMount = async () => {
@@ -54,9 +55,10 @@ class Feed extends React.Component {
 
   _onRefresh = () => {
     this.setState({ refreshing: true })
-    this.listPosts().then(() => {
-      this.setState({ refreshing: false })
-    })
+    this.componentDidMount()
+      .then(() => {
+        this.setState({ refreshing: false })
+      })
   }
 
   showModal = () => {
@@ -64,7 +66,7 @@ class Feed extends React.Component {
   }
 
   hideModal = () => {
-    this.setState({ modalVisible: false, name: '' })
+    this.setState({ modalVisible: false, postContent: '' })
   }
 
   onChangeText = (key, val) => {
@@ -72,12 +74,19 @@ class Feed extends React.Component {
   }
 
   createPost = async () => {
-    if (this.state.name === '') {
-      Alert.alert('Name it!')
+    if (this.state.postContent === '') {
+      Alert.alert('Write something!')
       return
     }
     try {
-      await this.props.onAdd({ id: uuid(), name: this.state.name })
+      await this.props.onAdd(
+        {
+          id: uuid(),
+          postContent: this.state.postContent,
+          postOwnerId: this.state.postOwnerId,
+          postOwnerUsername: this.state.postOwnerUsername
+        }
+      )
       await this.componentDidMount()
       Keyboard.dismiss()
       this.hideModal()
@@ -123,9 +132,9 @@ class Feed extends React.Component {
               <View style={styles.postCardStyle}>
                 <Card>
                   <TextInput
-                    onChangeText={val => this.onChangeText('name', val)}
+                    onChangeText={val => this.onChangeText('postContent', val)}
                     placeholder="Tell us your best..."
-                    value={this.state.name}
+                    value={this.state.postContent}
                     multiline={true}
                     maxLength={150}
                     autoFocus={true} // check for performance issue when true
@@ -133,7 +142,7 @@ class Feed extends React.Component {
                   />
                   <View style={{ alignItems: 'flex-end', padding: 5 }}>
                     <Text style={{ color: '#fb7777', fontWeight: 'bold' }}>
-                      {150 - this.state.name.length}
+                      {150 - this.state.postContent.length}
                     </Text>
                   </View>
                 </Card>
@@ -186,16 +195,18 @@ class Feed extends React.Component {
               this.state.posts.map((post, index) => (
                 <Card key={index} style={styles.cardStyle}>
                   <View style={styles.cardHeaderStyle}>
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-                      <TouchableOpacity
-                        onPress={() => this.deletePostAlert(post)}>
-                        <Icon name='md-more' style={{ color: '#1f267e', padding: 5 }} />
-                      </TouchableOpacity>
-                    </View>
+                    {post.postOwnerId === loggedInUser &&
+                      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
+                        <TouchableOpacity
+                          onPress={() => this.deletePostAlert(post)}>
+                          <Icon name='md-more' style={{ color: '#1f267e', padding: 5 }} />
+                        </TouchableOpacity>
+                      </View>
+                    }
                   </View>
                   <TouchableOpacity>
                     <Text style={styles.postBody}>
-                      {post.name}
+                      {post.postContent}
                     </Text>
                   </TouchableOpacity>
                   <View style={styles.cardFooterStyle}>

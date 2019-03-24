@@ -1,13 +1,22 @@
 import gql from 'graphql-tag';
 
 const CreatePost = gql`
-  mutation createPost($id: ID!, $name: String!) {
+  mutation createPost(
+    $id: ID!, 
+    $postContent: String!, 
+    $postOwnerUsername: String!,
+    $postOwnerId: String!
+    ) {
     createPost(input: {
       id: $id,
-      name: $name
+      postContent: $postContent
+      postOwnerUsername: $postOwnerUsername
+      postOwnerId: $postOwnerId
     }) {
       id
-      name
+      postContent
+      postOwnerUsername
+      postOwnerId
     }
   }
 `

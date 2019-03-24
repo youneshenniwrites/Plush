@@ -1,4 +1,14 @@
 type Post @model {
   id: ID!
-  name: String!
+  postOwnerUsername: String!
+  postOwnerId: String!
+  postContent: String!
+  likes: [Like] @connection(name: "PostLikes")
+}
+type Like @model {
+  id: ID!
+  numberLikes: Int!
+  likeOwnerUsername: String!
+  likeOwnerId: String!
+  post: Post @connection(name: "PostLikes")
 }
