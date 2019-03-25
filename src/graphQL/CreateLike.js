@@ -1,16 +1,3 @@
-// import gql from 'graphql-tag';
-
-// const CreateLike = gql`
-//   mutation ($input: CreateLikeInput!) {
-//     createLike(input: $input) {
-//       likeOwnerId
-//       likeOwnerUsername
-//     }
-//   }
-// `;
-
-// export default CreateLike;
-
 const CreateLike = `
   mutation (
     $id:ID!,

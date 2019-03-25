@@ -1,13 +1,10 @@
-import gql from 'graphql-tag';
-
-// List posts and their likes
-const listPosts = gql`
-  query listPosts {
-    listPosts {
+const listPosts = `
+  query {
+    listPosts{
       items {
         id
-        postContent
         postOwnerId
+        postContent
         postOwnerUsername
         likes {
           items {
@@ -21,5 +18,5 @@ const listPosts = gql`
   }
 `
 
-export default listPosts;
+export default listPosts
 

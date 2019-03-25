@@ -43,7 +43,6 @@ class Feed extends React.Component {
   }
 
   componentDidMount = async () => {
-    // const posts = await this.props.posts
     await Auth.currentAuthenticatedUser()
       .then(user => {
         this.setState(
@@ -57,6 +56,7 @@ class Feed extends React.Component {
       })
       .catch(err => console.log(err))
     await this.listPosts()
+    console.log(this.state.posts)
   }
 
   _onRefresh = () => {
@@ -149,23 +149,6 @@ class Feed extends React.Component {
       console.log('Error creating like.', err)
     }
   }
-
-
-  // createLike = async (post) => {
-  //   const postId = await post['id']
-  //   try {
-  //     await this.props.onAddLike(
-  //       {
-  //         likeOwnerId: this.state.likeOwnerId,
-  //         likeOwnerUsername: this.state.likeOwnerUsername,
-  //         likePostId: postId,
-  //       }
-  //     )
-  //     await this.componentDidMount()
-  //   } catch (err) {
-  //     console.log('Error creating like.', err)
-  //   }
-  // }
 
   render() {
     let loggedInUser = this.state.postOwnerId
@@ -285,23 +268,7 @@ class Feed extends React.Component {
 }
 
 export default compose(
-  // graphql(listPosts, {
-  //   options: {
-  //     fetchPolicy: 'network-only'
-  //   },
-  //   props: props => ({
-  //     posts: props.data.listPosts ? props.data.listPosts.items : []
-  //   })
-  // }),
   graphql(CreatePost, {
-    // options: {
-    //   update: (dataProxy, { data: { createPost } }) => {
-    //     const query = listPosts
-    //     const data = dataProxy.readQuery({ query })
-    //     data.listPosts.items.push(createPost)
-    //     dataProxy.writeQuery({ query, data })
-    //   }
-    // },
     props: (props) => ({
       onAddPost: (post) => {
         props.mutate({
@@ -314,17 +281,6 @@ export default compose(
     }),
   }),
   graphql(DeletePost, {
-    // options: {
-    //   update: (dataProxy, { data: { deletePost } }) => {
-    //     const query = listPosts
-    //     const data = dataProxy.readQuery({ query })
-    //     const index = data.listPosts.items.findIndex(({ id }) => id === deletePost.id)
-    //     if (index > -1) {
-    //       data.listPosts.items.splice(index, 1)
-    //     }
-    //     dataProxy.writeQuery({ query, data })
-    //   }
-    // },
     props: (props) => ({
       onRemovePost: (post) => {
         props.mutate({
@@ -336,26 +292,6 @@ export default compose(
       }
     }),
   }),
-  // graphql(CreateLike, {
-  //   // options: {
-  //   //   update: (dataProxy, { data: { createLike } }) => {
-  //   //     const query = listPosts
-  //   //     const data = dataProxy.readQuery({ query })
-  //   //     data.listPosts.items[0].likes.items.push(createLike)
-  //   //     dataProxy.writeQuery({ query, data })
-  //   //   }
-  //   // },
-  //   props: (props) => ({
-  //     onAddLike: (like) => {
-  //       props.mutate({
-  //         variables: { input: like },
-  //         optimisticResponse: () => ({
-  //           createLike: { ...like, __typename: 'Like' }
-  //         }),
-  //       })
-  //     }
-  //   }),
-  // }),
 )(Feed)
 
 const styles = StyleSheet.create({
