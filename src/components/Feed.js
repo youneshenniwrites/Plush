@@ -11,6 +11,7 @@ import {
   RefreshControl
 } from 'react-native'
 
+import API, { graphqlOperation } from '@aws-amplify/api'
 import Auth from '@aws-amplify/auth'
 import Amplify from '@aws-amplify/core'
 
@@ -19,7 +20,9 @@ import { Card, Icon, Text } from 'native-base'
 import { v4 as uuid } from 'uuid';
 
 import config from '../aws-exports'
+
 import CreatePost from '../graphQL/CreatePost'
+import CreateLike from '../graphQL/CreateLike'
 import DeletePost from '../graphQL/DeletePost'
 import listPosts from '../graphQL/listPosts'
 
@@ -30,27 +33,30 @@ Amplify.configure(config)
 
 class Feed extends React.Component {
   state = {
-    name: '',
     modalVisible: false,
     posts: [],
     postOwnerId: '',
+    likeOwnerId: '',
+    postContent: '',
     postOwnerUsername: '',
-    postContent: ''
+    likeOwnerUsername: '',
   }
 
   componentDidMount = async () => {
-    const posts = await this.props.posts
-    await this.setState({ posts: posts })
+    // const posts = await this.props.posts
     await Auth.currentAuthenticatedUser()
       .then(user => {
         this.setState(
           {
             postOwnerUsername: user.username,
+            likeOwnerUsername: user.username,
             postOwnerId: user.attributes.sub,
+            likeOwnerId: user.attributes.sub,
           }
         )
       })
       .catch(err => console.log(err))
+    await this.listPosts()
   }
 
   _onRefresh = () => {
@@ -73,13 +79,24 @@ class Feed extends React.Component {
     this.setState({ [key]: val })
   }
 
+  listPosts = async () => {
+    try {
+      const graphqldata = await API.graphql(graphqlOperation(listPosts))
+      const listOfAllposts = await graphqldata.data.listPosts.items
+      this.setState({ posts: listOfAllposts })
+    }
+    catch (err) {
+      console.log('error: ', err)
+    }
+  }
+
   createPost = async () => {
     if (this.state.postContent === '') {
       Alert.alert('Write something!')
       return
     }
     try {
-      await this.props.onAdd(
+      await this.props.onAddPost(
         {
           id: uuid(),
           postContent: this.state.postContent,
@@ -110,13 +127,45 @@ class Feed extends React.Component {
   deletePost = async (post) => {
     const postId = await post['id']
     try {
-      await this.props.onRemove({ id: postId })
+      await this.props.onRemovePost({ id: postId })
       await this.componentDidMount()
       console.log('Post successfully deleted.')
     } catch (err) {
       console.log('Error deleting post.', err)
     }
   }
+
+  createLike = async (post) => {
+    const postId = await post['id']
+    const like = {
+      likeOwnerId: this.state.likeOwnerId,
+      likeOwnerUsername: this.state.likeOwnerUsername,
+      id: postId,
+    }
+    try {
+      await API.graphql(graphqlOperation(CreateLike, like))
+      await this.componentDidMount()
+    } catch (err) {
+      console.log('Error creating like.', err)
+    }
+  }
+
+
+  // createLike = async (post) => {
+  //   const postId = await post['id']
+  //   try {
+  //     await this.props.onAddLike(
+  //       {
+  //         likeOwnerId: this.state.likeOwnerId,
+  //         likeOwnerUsername: this.state.likeOwnerUsername,
+  //         likePostId: postId,
+  //       }
+  //     )
+  //     await this.componentDidMount()
+  //   } catch (err) {
+  //     console.log('Error creating like.', err)
+  //   }
+  // }
 
   render() {
     let loggedInUser = this.state.postOwnerId
@@ -215,6 +264,15 @@ class Feed extends React.Component {
                         {post.postOwnerUsername}
                       </Text>
                     </View>
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-end' }}>
+                      <TouchableOpacity
+                        onPress={() => this.createLike(post)}>
+                        <Icon
+                          name='md-heart'
+                          style={{ fontSize: 45, color: '#69FB' }}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </Card>
               ))
@@ -227,25 +285,25 @@ class Feed extends React.Component {
 }
 
 export default compose(
-  graphql(listPosts, {
-    options: {
-      fetchPolicy: 'network-only'
-    },
-    props: props => ({
-      posts: props.data.listPosts ? props.data.listPosts.items : []
-    })
-  }),
+  // graphql(listPosts, {
+  //   options: {
+  //     fetchPolicy: 'network-only'
+  //   },
+  //   props: props => ({
+  //     posts: props.data.listPosts ? props.data.listPosts.items : []
+  //   })
+  // }),
   graphql(CreatePost, {
-    options: {
-      update: (dataProxy, { data: { createPost } }) => {
-        const query = listPosts
-        const data = dataProxy.readQuery({ query })
-        data.listPosts.items.push(createPost)
-        dataProxy.writeQuery({ query, data })
-      }
-    },
+    // options: {
+    //   update: (dataProxy, { data: { createPost } }) => {
+    //     const query = listPosts
+    //     const data = dataProxy.readQuery({ query })
+    //     data.listPosts.items.push(createPost)
+    //     dataProxy.writeQuery({ query, data })
+    //   }
+    // },
     props: (props) => ({
-      onAdd: (post) => {
+      onAddPost: (post) => {
         props.mutate({
           variables: post,
           optimisticResponse: () => ({
@@ -256,19 +314,19 @@ export default compose(
     }),
   }),
   graphql(DeletePost, {
-    options: {
-      update: (dataProxy, { data: { deletePost } }) => {
-        const query = listPosts
-        const data = dataProxy.readQuery({ query })
-        const index = data.listPosts.items.findIndex(({ id }) => id === deletePost.id)
-        if (index > -1) {
-          data.listPosts.items.splice(index, 1)
-        }
-        dataProxy.writeQuery({ query, data })
-      }
-    },
+    // options: {
+    //   update: (dataProxy, { data: { deletePost } }) => {
+    //     const query = listPosts
+    //     const data = dataProxy.readQuery({ query })
+    //     const index = data.listPosts.items.findIndex(({ id }) => id === deletePost.id)
+    //     if (index > -1) {
+    //       data.listPosts.items.splice(index, 1)
+    //     }
+    //     dataProxy.writeQuery({ query, data })
+    //   }
+    // },
     props: (props) => ({
-      onRemove: (post) => {
+      onRemovePost: (post) => {
         props.mutate({
           variables: post,
           optimisticResponse: () => ({
@@ -277,7 +335,27 @@ export default compose(
         })
       }
     }),
-  })
+  }),
+  // graphql(CreateLike, {
+  //   // options: {
+  //   //   update: (dataProxy, { data: { createLike } }) => {
+  //   //     const query = listPosts
+  //   //     const data = dataProxy.readQuery({ query })
+  //   //     data.listPosts.items[0].likes.items.push(createLike)
+  //   //     dataProxy.writeQuery({ query, data })
+  //   //   }
+  //   // },
+  //   props: (props) => ({
+  //     onAddLike: (like) => {
+  //       props.mutate({
+  //         variables: { input: like },
+  //         optimisticResponse: () => ({
+  //           createLike: { ...like, __typename: 'Like' }
+  //         }),
+  //       })
+  //     }
+  //   }),
+  // }),
 )(Feed)
 
 const styles = StyleSheet.create({

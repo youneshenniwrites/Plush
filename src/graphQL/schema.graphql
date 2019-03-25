@@ -5,9 +5,9 @@ type Post @model {
   postContent: String!
   likes: [Like] @connection(name: "PostLikes")
 }
+
 type Like @model {
   id: ID!
-  numberLikes: Int!
   likeOwnerUsername: String!
   likeOwnerId: String!
   post: Post @connection(name: "PostLikes")
