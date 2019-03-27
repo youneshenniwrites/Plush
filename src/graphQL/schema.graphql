@@ -4,8 +4,15 @@ type Post @model {
   postOwnerId: String!
   postContent: String!
   likes: [Like] @connection(name: "PostLikes")
+}
+
+type Picture @model {
+  id: ID!
+  pictureOwnerUsername: String!
+  pictureOwnerId: String!
   visibility: Visibility
   file: S3Object
+  likes: [Like] @connection(name: "PictureLikes")
 }
 
 type Like @model {
@@ -13,6 +20,7 @@ type Like @model {
   likeOwnerUsername: String!
   likeOwnerId: String!
   post: Post @connection(name: "PostLikes")
+  picture: Picture @connection(name: "PictureLikes")
 }
 
 type S3Object {

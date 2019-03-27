@@ -29,6 +29,8 @@ import config from '../aws-exports'
 import keys from '../keys'
 
 import CreatePost from '../graphQL/CreatePost'
+import CreatePicture from '../graphQL/CreatePicture'
+// import DeletePicture from '../graphQL/DeletePicture'
 import CreateLike from '../graphQL/CreateLike'
 import DeletePost from '../graphQL/DeletePost'
 import listPosts from '../graphQL/listPosts'
@@ -101,19 +103,13 @@ class Feed extends React.Component {
   }
 
   createPost = async () => {
-    if (this.state.postContent === '') {
+    const post = this.state
+    if (post.postContent === '') {
       Alert.alert('Write something!')
       return
     }
     try {
-      await this.props.onAddPost(
-        {
-          id: uuid(),
-          postContent: this.state.postContent,
-          postOwnerId: this.state.postOwnerId,
-          postOwnerUsername: this.state.postOwnerUsername
-        }
-      )
+      await API.graphql(graphqlOperation(CreatePost, post))
       await this.componentDidMount()
       Keyboard.dismiss()
       this.hideModal()
@@ -121,6 +117,33 @@ class Feed extends React.Component {
       console.log('Error creating post.', err)
     }
   }
+
+  // Working on it
+
+  // createPicture = async () => {
+  //   try {
+  //     // await this.props.onAddPicture(
+  //     //   {
+  //     //     id: uuid(),
+  //     //     postContent: this.state.postContent,
+  //     //     postOwnerId: this.state.postOwnerId,
+  //     //     postOwnerUsername: this.state.postOwnerUsername,
+  //     //     file: {
+  //     //       bucket: 'none',
+  //     //       region: 'none',
+  //     //       key: 'none',
+  //     //       __typename: 'S3Object'
+  //     //     },
+  //     //     visibility: 'public'
+  //     //   }
+  //     // )
+  //     await this.componentDidMount()
+  //     Keyboard.dismiss()
+  //     this.hideModal()
+  //   } catch (err) {
+  //     console.log('Error creating post.', err)
+  //   }
+  // }
 
   deletePostAlert = async (post) => {
     await Alert.alert(
@@ -137,32 +160,12 @@ class Feed extends React.Component {
   deletePost = async (post) => {
     const postId = await post['id']
     try {
-      await this.props.onRemovePost({ id: postId })
+      await API.graphql(graphqlOperation(DeletePost, { id: postId }))
       await this.componentDidMount()
-      console.log('Post successfully deleted.')
     } catch (err) {
       console.log('Error deleting post.', err)
     }
   }
-
-  // Toggle like will come here
-
-  createLike = async (post) => {
-    const postId = await post['id']
-    const like = {
-      likeOwnerId: this.state.likeOwnerId,
-      likeOwnerUsername: this.state.likeOwnerUsername,
-      id: postId,
-    }
-    try {
-      await API.graphql(graphqlOperation(CreateLike, like))
-      await this.componentDidMount()
-    } catch (err) {
-      console.log('Error creating like.', err)
-    }
-  }
-
-  // Delete like will come here
 
   // Get pictures from device then upload them to AWS S3
   createPicture = async () => {
@@ -210,6 +213,25 @@ class Feed extends React.Component {
         }
       })
   }
+
+  // Toggle like will come here
+
+  createLike = async (post) => {
+    const postId = await post['id']
+    const like = {
+      likeOwnerId: this.state.likeOwnerId,
+      likeOwnerUsername: this.state.likeOwnerUsername,
+      id: postId,
+    }
+    try {
+      await API.graphql(graphqlOperation(CreateLike, like))
+      await this.componentDidMount()
+    } catch (err) {
+      console.log('Error creating like.', err)
+    }
+  }
+
+  // Delete like will come here
 
 
   render() {
@@ -326,30 +348,30 @@ class Feed extends React.Component {
 }
 
 export default compose(
-  graphql(CreatePost, {
+  graphql(CreatePicture, {
     props: (props) => ({
-      onAddPost: (post) => {
+      onAddPicture: (post) => {
         props.mutate({
           variables: post,
           optimisticResponse: () => ({
-            createPost: { ...post, __typename: 'Post' }
+            createPost: { ...post, __typename: 'Picture' }
           }),
         })
       }
     }),
   }),
-  graphql(DeletePost, {
-    props: (props) => ({
-      onRemovePost: (post) => {
-        props.mutate({
-          variables: post,
-          optimisticResponse: () => ({
-            deletePost: { ...post, __typename: 'Post' }
-          }),
-        })
-      }
-    }),
-  }),
+  // graphql(DeletePicture, {
+  //   props: (props) => ({
+  //     onRemovePost: (picture) => {
+  //       props.mutate({
+  //         variables: picture,
+  //         optimisticResponse: () => ({
+  //           deletePost: { ...picture, __typename: 'Picture' }
+  //         }),
+  //       })
+  //     }
+  //   }),
+  // }),
 )(Feed)
 
 const styles = StyleSheet.create({

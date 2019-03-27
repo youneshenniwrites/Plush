@@ -1,37 +1,22 @@
-import gql from 'graphql-tag';
-
-const CreatePost = gql`
-  mutation createPost(
-    $id: ID!, 
+const CreatePost = `
+  mutation(
     $postContent: String!, 
-    $postOwnerUsername: String!,
-    $postOwnerId: String!
-    $visibility: Visibility,
-    $file: S3Object
+    $postOwnerId: String!, 
+    $postOwnerUsername: String!
     ) {
-    createPost(input: {
-      id: $id,
-      postContent: $postContent,
+    createPost(input:{
       postOwnerUsername: $postOwnerUsername,
       postOwnerId: $postOwnerId,
-      file: $file,
-      visibility: $visibility
+      postContent: $postContent
     }) {
       id
-      postContent
-      postOwnerUsername
-      postOwnerId
-      visibility
-      file {
-        region
-        bucket
-        key
-      }
     }
   }
 `
 
 export default CreatePost;
+
+
 
 
 

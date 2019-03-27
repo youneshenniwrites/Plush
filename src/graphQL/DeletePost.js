@@ -1,8 +1,6 @@
-import gql from 'graphql-tag';
-
-const DeletePost = gql`
-  mutation deletePost($id: ID!) {
-    deletePost(input: {
+const DeletePost = `
+  mutation($id:ID!) {
+    deletePost(input:{
       id: $id,
     }) {
       id

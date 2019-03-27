@@ -1,11 +1,16 @@
-const listPosts = `
+const listPictures = `
   query {
     listPosts{
       items {
         id
+        visibility
         postOwnerId
-        postContent
         postOwnerUsername
+        file {
+          bucket
+          region
+          key
+        }
         likes {
           items {
             id
@@ -18,5 +23,5 @@ const listPosts = `
   }
 `
 
-export default listPosts
+export default listPictures
 
