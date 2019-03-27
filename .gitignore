@@ -9,3 +9,4 @@ yarn.lock
 .expo
 babel.congif.js
 .watchmanconfig
+keys.js

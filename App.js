@@ -18,6 +18,8 @@ Amplify.configure(awsconfig);
 // Create a client
 const GRAPHQL_API_REGION = awsconfig.aws_appsync_region
 const GRAPHQL_API_ENDPOINT_URL = awsconfig.aws_appsync_graphqlEndpoint
+const S3_BUCKET_REGION = awsconfig.aws_user_files_s3_bucket_region
+const S3_BUCKET_NAME = awsconfig.aws_user_files_s3_bucket
 const AUTH_TYPE = awsconfig.aws_appsync_authenticationType
 
 const client = new AWSAppSyncClient({
@@ -28,6 +30,7 @@ const client = new AWSAppSyncClient({
     jwtToken: async () => (
       await Auth.currentSession()).getAccessToken().getJwtToken(),
   },
+  complexObjectsCredentials: () => Auth.currentCredentials(),
   disableOffline: true
 });
 
@@ -35,7 +38,12 @@ class App extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <Feed />
+        <Feed
+          options={{
+            bucket: S3_BUCKET_NAME,
+            region: S3_BUCKET_REGION
+          }}
+        />
       </View>
     )
   }

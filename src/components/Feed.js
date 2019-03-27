@@ -14,13 +14,19 @@ import {
 import API, { graphqlOperation } from '@aws-amplify/api'
 import Auth from '@aws-amplify/auth'
 import Amplify from '@aws-amplify/core'
+import Storage from '@aws-amplify/storage'
+
+import { RNS3 } from 'react-native-aws3'; // for sending pics to S3
 
 import { Card, Text } from 'native-base'
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons'
+import { ImagePicker, Permissions } from 'expo'
+
 
 import { v4 as uuid } from 'uuid';
 
 import config from '../aws-exports'
+import keys from '../keys'
 
 import CreatePost from '../graphQL/CreatePost'
 import CreateLike from '../graphQL/CreateLike'
@@ -41,7 +47,10 @@ class Feed extends React.Component {
     postContent: '',
     postOwnerUsername: '',
     likeOwnerUsername: '',
+    image: null,
+    allImages: []
   }
+
 
   componentDidMount = async () => {
     await Auth.currentAuthenticatedUser()
@@ -57,7 +66,7 @@ class Feed extends React.Component {
       })
       .catch(err => console.log(err))
     await this.listPosts()
-    console.log(this.state.posts)
+    // console.log(this.state.posts)
   }
 
   _onRefresh = () => {
@@ -136,6 +145,8 @@ class Feed extends React.Component {
     }
   }
 
+  // Toggle like will come here
+
   createLike = async (post) => {
     const postId = await post['id']
     const like = {
@@ -150,6 +161,56 @@ class Feed extends React.Component {
       console.log('Error creating like.', err)
     }
   }
+
+  // Delete like will come here
+
+  // Get pictures from device then upload them to AWS S3
+  createPicture = async () => {
+    await this.askPermissionsAsync()
+    const { cancelled, uri } = await ImagePicker.launchImageLibraryAsync(
+      {
+        allowsEditing: false,
+      }
+    )
+    if (!cancelled) {
+      this.setState({ image: uri })
+      this.sendPicS3(this.state.image)
+    }
+  }
+
+  // Give Expo access to device library
+  askPermissionsAsync = async () => {
+    await Permissions.askAsync(Permissions.CAMERA_ROLL)
+  }
+
+  // Upload an image to S3
+  sendPicS3 = async (uri) => {
+    const { bucket, region } = this.props.options
+    let pic = {
+      uri: uri,
+      name: uuid(),
+      type: "image/jpeg",
+      bucket,
+      region,
+    }
+    const config = {
+      keyPrefix: "images/public/",
+      bucket,
+      region,
+      accessKey: keys.accessKey,
+      secretKey: keys.secretKey,
+      successActionStatus: 201
+    }
+    RNS3.put(pic, config)
+      .then(response => {
+        if (response.status !== 201) {
+          throw new Error("Failed to upload image to S3");
+        } else {
+          console.log('Following file has been uploaded to AWS S3:', response)
+        }
+      })
+  }
+
 
   render() {
     let loggedInUser = this.state.postOwnerId
@@ -203,7 +264,7 @@ class Feed extends React.Component {
             <Ionicons style={styles.iconStyle} name="md-create" />
           </TouchableOpacity>
           {/* Access device library to add pictures */}
-          <TouchableOpacity onPress={this.showModal}>
+          <TouchableOpacity onPress={this.createPicture}>
             <Ionicons style={styles.iconStyle} name="ios-camera" />
           </TouchableOpacity>
           <TouchableOpacity onPress={this.componentDidMount}>
