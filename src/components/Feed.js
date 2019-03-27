@@ -34,6 +34,7 @@ import CreatePicture from '../graphQL/CreatePicture'
 import CreateLike from '../graphQL/CreateLike'
 import DeletePost from '../graphQL/DeletePost'
 import listPosts from '../graphQL/listPosts'
+import listPictures from '../graphQL/listPictures'
 
 // Apollo components
 import { graphql, compose } from 'react-apollo'
@@ -44,13 +45,13 @@ class Feed extends React.Component {
   state = {
     modalVisible: false,
     posts: [],
+    pictures: [],
     postOwnerId: '',
     likeOwnerId: '',
     postContent: '',
     postOwnerUsername: '',
     likeOwnerUsername: '',
     image: null,
-    allImages: []
   }
 
 
@@ -68,7 +69,8 @@ class Feed extends React.Component {
       })
       .catch(err => console.log(err))
     await this.listPosts()
-    // console.log(this.state.posts)
+    // console.log('List of posts: ', this.state.posts)
+    // console.log('List of pictures: ', this.state.pictures)
   }
 
   _onRefresh = () => {
@@ -93,9 +95,11 @@ class Feed extends React.Component {
 
   listPosts = async () => {
     try {
-      const graphqldata = await API.graphql(graphqlOperation(listPosts))
-      const listOfAllposts = await graphqldata.data.listPosts.items
-      this.setState({ posts: listOfAllposts })
+      const postsData = await API.graphql(graphqlOperation(listPosts))
+      const picturesData = await API.graphql(graphqlOperation(listPictures))
+      const listOfAllposts = await postsData.data.listPosts.items
+      const listOfAllpictures = await picturesData.data.listPictures.items
+      this.setState({ posts: listOfAllposts, pictures: listOfAllpictures })
     }
     catch (err) {
       console.log('error: ', err)
