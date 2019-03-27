@@ -1,8 +1,6 @@
-import gql from 'graphql-tag';
-
-const DeleteLike = gql`
-  mutation deleteLike($id: ID!) {
-    deleteLike(input: {
+const DeleteLike = `
+  mutation($id:ID!) {
+    deleteLike(input:{
       id: $id,
     }) {
       id

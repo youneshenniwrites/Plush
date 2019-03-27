@@ -28,10 +28,12 @@ import { v4 as uuid } from 'uuid';
 import config from '../aws-exports'
 import keys from '../keys'
 
+import LikeButton from './LikeButton'
 import CreatePost from '../graphQL/CreatePost'
 import CreatePicture from '../graphQL/CreatePicture'
 // import DeletePicture from '../graphQL/DeletePicture'
 import CreateLike from '../graphQL/CreateLike'
+import DeleteLike from '../graphQL/DeleteLike'
 import DeletePost from '../graphQL/DeletePost'
 import listPosts from '../graphQL/listPosts'
 import listPictures from '../graphQL/listPictures'
@@ -46,6 +48,7 @@ class Feed extends React.Component {
     modalVisible: false,
     posts: [],
     pictures: [],
+    allPicsURIs: [],
     postOwnerId: '',
     likeOwnerId: '',
     postContent: '',
@@ -69,6 +72,7 @@ class Feed extends React.Component {
       })
       .catch(err => console.log(err))
     await this.listPosts()
+    // await this.allPicsURIs()
     // console.log('List of posts: ', this.state.posts)
     // console.log('List of pictures: ', this.state.pictures)
   }
@@ -211,7 +215,43 @@ class Feed extends React.Component {
       })
   }
 
-  // Toggle like will come here
+  allPicsURIs = () => {
+		/* 
+		Perform a get call with Storage API to retrieve the URI of each picture.
+		We then store all uris in the state to be called in the render method.
+		*/
+    let access = { level: 'public' }
+    this.state.pictures.map((picture, index) => {
+      let key = picture.file.key
+      key = key.substring(key.indexOf('public/') + 1) // get rid of folder name in key
+      Storage.get(key, access)
+        .then((response) => {
+          let uri = response.substr(0, response.indexOf('?')) // extract uri from response
+          if (this.state.allImagesURIs.includes(uri)) {
+            console.log('KO')
+            return
+          } else {
+            console.log('OK')
+            this.setState(prevState => ({
+              allPicsURIs: [...prevState.allPicsURIs, uri]
+            }))
+          }
+        })
+        .catch(err => console.log(err))
+    })
+  }
+
+  toggleLikePost = async (post) => {
+    const loggedInUser = await this.state.postOwnerId
+    const likeUserObject = await post.likes.items.filter(
+      obj => obj.likeOwnerId === loggedInUser
+    )
+    if (likeUserObject.length !== 0) {
+      await this.deleteLike(likeUserObject)
+      return
+    }
+    await this.createLike(post)
+  }
 
   createLike = async (post) => {
     const postId = await post['id']
@@ -228,8 +268,15 @@ class Feed extends React.Component {
     }
   }
 
-  // Delete like will come here
-
+  deleteLike = async (likeUserObject) => {
+    const likeId = await likeUserObject[0]['id']
+    try {
+      await API.graphql(graphqlOperation(DeleteLike, { id: likeId }))
+      await this.componentDidMount()
+    } catch (err) {
+      console.log('Error deleting like.', err)
+    }
+  }
 
   render() {
     let loggedInUser = this.state.postOwnerId
@@ -327,15 +374,33 @@ class Feed extends React.Component {
                         {post.postOwnerUsername}
                       </Text>
                     </View>
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-end' }}>
-                      <TouchableOpacity
-                        onPress={() => this.createLike(post)}>
-                        <Ionicons style={{ fontSize: 45, color: '#69FB' }} name="md-heart" />
-                      </TouchableOpacity>
-                    </View>
+                    {/* Logged in user liked this post */}
+                    {
+                      post.likes.items.length !== 0 &&
+                      post.likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 1 &&
+                      <LikeButton color='#FB7777' handlePress={() => this.toggleLikePost(post)} />
+                    }
+                    {/* Logged in user did not like this post */}
+                    {
+                      post.likes.items.length !== 0 &&
+                      post.likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 0 &&
+                      <LikeButton color='#69FB' handlePress={() => this.toggleLikePost(post)} />
+                    }
+                    {/* Post has no likes */}
+                    {
+                      post.likes.items.length === 0 &&
+                      <LikeButton color='#69FB' handlePress={() => this.toggleLikePost(post)} />
+                    }
                   </View>
                 </Card>
               ))
+            }
+            {
+              this.state.allPicsURIs.map((uri, index) => {
+                return (
+                  <Image key={index} style={styles.image} source={{ uri: uri }} />
+                )
+              })
             }
           </View>
         </ScrollView>
