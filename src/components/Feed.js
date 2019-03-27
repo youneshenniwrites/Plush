@@ -15,7 +15,8 @@ import API, { graphqlOperation } from '@aws-amplify/api'
 import Auth from '@aws-amplify/auth'
 import Amplify from '@aws-amplify/core'
 
-import { Card, Icon, Text } from 'native-base'
+import { Card, Text } from 'native-base'
+import { Ionicons } from '@expo/vector-icons';
 
 import { v4 as uuid } from 'uuid';
 
@@ -199,18 +200,14 @@ class Feed extends React.Component {
           </Modal>
           {/* Open modal to write a post */}
           <TouchableOpacity onPress={this.showModal}>
-            <Icon
-              active
-              name='add-circle'
-              style={styles.iconStyle}
-            />
+            <Ionicons style={styles.iconStyle} name="md-create" />
+          </TouchableOpacity>
+          {/* Access device library to add pictures */}
+          <TouchableOpacity onPress={this.showModal}>
+            <Ionicons style={styles.iconStyle} name="ios-camera" />
           </TouchableOpacity>
           <TouchableOpacity onPress={this.componentDidMount}>
-            <Icon
-              active
-              name='refresh'
-              style={styles.iconStyle}
-            />
+            <Ionicons style={styles.iconStyle} name="ios-refresh" />
           </TouchableOpacity>
         </View>
         <ScrollView
@@ -231,7 +228,10 @@ class Feed extends React.Component {
                       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
                         <TouchableOpacity
                           onPress={() => this.deletePostAlert(post)}>
-                          <Icon name='md-more' style={{ color: '#1f267e', padding: 5 }} />
+                          <Ionicons
+                            style={{ color: '#1f267e', padding: 5, fontSize: 30 }}
+                            name="md-more"
+                          />
                         </TouchableOpacity>
                       </View>
                     }
@@ -250,10 +250,7 @@ class Feed extends React.Component {
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-end' }}>
                       <TouchableOpacity
                         onPress={() => this.createLike(post)}>
-                        <Icon
-                          name='md-heart'
-                          style={{ fontSize: 45, color: '#69FB' }}
-                        />
+                        <Ionicons style={{ fontSize: 45, color: '#69FB' }} name="md-heart" />
                       </TouchableOpacity>
                     </View>
                   </View>

@@ -4,6 +4,8 @@ type Post @model {
   postOwnerId: String!
   postContent: String!
   likes: [Like] @connection(name: "PostLikes")
+  visibility: Visibility
+  file: S3Object
 }
 
 type Like @model {
@@ -11,4 +13,15 @@ type Like @model {
   likeOwnerUsername: String!
   likeOwnerId: String!
   post: Post @connection(name: "PostLikes")
+}
+
+type S3Object {
+  bucket: String!
+  region: String!
+  key: String!
+}
+
+enum Visibility {
+  public
+  private
 }
