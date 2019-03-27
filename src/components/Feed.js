@@ -118,33 +118,6 @@ class Feed extends React.Component {
     }
   }
 
-  // Working on it
-
-  // createPicture = async () => {
-  //   try {
-  //     // await this.props.onAddPicture(
-  //     //   {
-  //     //     id: uuid(),
-  //     //     postContent: this.state.postContent,
-  //     //     postOwnerId: this.state.postOwnerId,
-  //     //     postOwnerUsername: this.state.postOwnerUsername,
-  //     //     file: {
-  //     //       bucket: 'none',
-  //     //       region: 'none',
-  //     //       key: 'none',
-  //     //       __typename: 'S3Object'
-  //     //     },
-  //     //     visibility: 'public'
-  //     //   }
-  //     // )
-  //     await this.componentDidMount()
-  //     Keyboard.dismiss()
-  //     this.hideModal()
-  //   } catch (err) {
-  //     console.log('Error creating post.', err)
-  //   }
-  // }
-
   deletePostAlert = async (post) => {
     await Alert.alert(
       'Delete Post',
@@ -167,7 +140,7 @@ class Feed extends React.Component {
     }
   }
 
-  // Get pictures from device then upload them to AWS S3
+  // Get pictures from device then upload them to AWS S3 and store their records in DynamobDB
   createPicture = async () => {
     await this.askPermissionsAsync()
     const { cancelled, uri } = await ImagePicker.launchImageLibraryAsync(
@@ -177,7 +150,8 @@ class Feed extends React.Component {
     )
     if (!cancelled) {
       this.setState({ image: uri })
-      this.sendPicS3(this.state.image)
+      await this.uploadToS3AndRecordInDynamodb(this.state.image)
+      await this.componentDidMount()
     }
   }
 
@@ -186,10 +160,9 @@ class Feed extends React.Component {
     await Permissions.askAsync(Permissions.CAMERA_ROLL)
   }
 
-  // Upload an image to S3
-  sendPicS3 = async (uri) => {
+  uploadToS3AndRecordInDynamodb = async (uri) => {
     const { bucket, region } = this.props.options
-    let pic = {
+    let picture = {
       uri: uri,
       name: uuid(),
       type: "image/jpeg",
@@ -204,12 +177,32 @@ class Feed extends React.Component {
       secretKey: keys.secretKey,
       successActionStatus: 201
     }
-    RNS3.put(pic, config)
+    const folder = 'images'
+    const visibility = 'public'
+    RNS3.put(picture, config)
       .then(response => {
         if (response.status !== 201) {
           throw new Error("Failed to upload image to S3");
         } else {
-          console.log('Following file has been uploaded to AWS S3:', response)
+          console.log('The following file has been uploaded to AWS S3:', response)
+          const { type: mimeType } = response;
+          const key = `${folder}/${visibility}/${picture.name}`;
+          const file = {
+            bucket,
+            region,
+            key,
+            mimeType
+          }
+          // Apollo mutation to create a picture
+          this.props.onAddPicture(
+            {
+              id: uuid(),
+              pictureOwnerId: this.state.postOwnerId,
+              pictureOwnerUsername: this.state.postOwnerUsername,
+              visibility: visibility,
+              file: file
+            }
+          )
         }
       })
   }
@@ -350,11 +343,15 @@ class Feed extends React.Component {
 export default compose(
   graphql(CreatePicture, {
     props: (props) => ({
-      onAddPicture: (post) => {
+      onAddPicture: (picture) => {
         props.mutate({
-          variables: post,
+          variables: { input: picture },
           optimisticResponse: () => ({
-            createPost: { ...post, __typename: 'Picture' }
+            createPicture: {
+              ...picture,
+              __typename: 'Picture',
+              file: { ...picture.file, __typename: 'S3Object' }
+            }
           }),
         })
       }

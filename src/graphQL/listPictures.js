@@ -1,11 +1,11 @@
 const listPictures = `
   query {
-    listPosts{
+    listPictures{
       items {
         id
         visibility
-        postOwnerId
-        postOwnerUsername
+        pictureOwnerId
+        pictureOwnerUsername
         file {
           bucket
           region
