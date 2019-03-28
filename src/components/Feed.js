@@ -16,7 +16,6 @@ import Storage from '@aws-amplify/storage'
 
 import { RNS3 } from 'react-native-aws3'; // for sending pics to S3
 
-import { Card, Text } from 'native-base'
 import { Ionicons } from '@expo/vector-icons'
 import { ImagePicker, Permissions } from 'expo'
 
@@ -26,8 +25,8 @@ import { v4 as uuid } from 'uuid';
 import config from '../aws-exports'
 import keys from '../keys'
 
-import LikeButton from './LikeButton'
 import ModalPosts from './ModalPosts'
+import PostCard from './PostCard'
 
 import CreatePost from '../graphQL/CreatePost'
 import CreatePicture from '../graphQL/CreatePicture'
@@ -77,14 +76,7 @@ class Feed extends React.Component {
     // console.log('List of pictures: ', this.state.pictures)
   }
 
-  _onRefresh = () => {
-    this.setState({ refreshing: true })
-    this.componentDidMount()
-      .then(() => {
-        this.setState({ refreshing: false })
-      })
-  }
-
+  // Modal posts methods
   showModal = () => {
     this.setState({ modalVisible: true })
   }
@@ -95,6 +87,14 @@ class Feed extends React.Component {
 
   onChangeText = (key, val) => {
     this.setState({ [key]: val })
+  }
+
+  _onRefresh = () => {
+    this.setState({ refreshing: true })
+    this.componentDidMount()
+      .then(() => {
+        this.setState({ refreshing: false })
+      })
   }
 
   listPosts = async () => {
@@ -312,54 +312,19 @@ class Feed extends React.Component {
           }
         >
           <View style={{ flex: 1, alignItems: 'center' }}>
+            {/* Posts */}
             {
               this.state.posts.map((post, index) => (
-                <Card key={index} style={styles.cardStyle}>
-                  <View style={styles.cardHeaderStyle}>
-                    {post.postOwnerId === loggedInUser &&
-                      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-                        <TouchableOpacity
-                          onPress={() => this.deletePostAlert(post)}>
-                          <Ionicons
-                            style={{ color: '#1f267e', padding: 5, fontSize: 30 }}
-                            name="md-more"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    }
-                  </View>
-                  <TouchableOpacity>
-                    <Text style={styles.postBody}>
-                      {post.postContent}
-                    </Text>
-                  </TouchableOpacity>
-                  <View style={styles.cardFooterStyle}>
-                    <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-                      <Text style={styles.postUsername}>
-                        {post.postOwnerUsername}
-                      </Text>
-                    </View>
-                    {/* Logged in user liked this post */}
-                    {
-                      post.likes.items.length !== 0 &&
-                      post.likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 1 &&
-                      <LikeButton color='#FB7777' handlePress={() => this.toggleLikePost(post)} />
-                    }
-                    {/* Logged in user did not like this post */}
-                    {
-                      post.likes.items.length !== 0 &&
-                      post.likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 0 &&
-                      <LikeButton color='#69FB' handlePress={() => this.toggleLikePost(post)} />
-                    }
-                    {/* Post has no likes */}
-                    {
-                      post.likes.items.length === 0 &&
-                      <LikeButton color='#69FB' handlePress={() => this.toggleLikePost(post)} />
-                    }
-                  </View>
-                </Card>
+                <PostCard
+                  key={index}
+                  post={post}
+                  user={loggedInUser}
+                  deletePostAlert={() => this.deletePostAlert(post)}
+                  toggleLikePost={() => this.toggleLikePost(post)}
+                />
               ))
             }
+            {/* Pictures */}
             {
               this.state.allPicsURIs.map((uri, index) => {
                 return (
@@ -416,35 +381,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  postUsername: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1f267e'
-  },
-  postBody: {
-    fontSize: 20,
-    color: '#1f267e',
-    padding: 12
-  },
   iconStyle: {
     color: '#5017ae',
     fontSize: 38
-  },
-  cardStyle: {
-    flex: 1,
-    backgroundColor: '#d0d9ed',
-    padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardFooterStyle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardHeaderStyle: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
   },
 })
