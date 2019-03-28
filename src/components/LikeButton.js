@@ -1,9 +1,9 @@
-import React from "react";
+import React from "react"
 import {
   View,
   TouchableOpacity,
   StyleSheet
-} from "react-native";
+} from "react-native"
 
 import { Ionicons } from '@expo/vector-icons'
 
@@ -26,4 +26,4 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'center'
   }
-});
+})

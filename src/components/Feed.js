@@ -3,8 +3,6 @@ import {
   Alert,
   Keyboard,
   StyleSheet,
-  TextInput,
-  Modal,
   TouchableOpacity,
   View,
   ScrollView,
@@ -29,6 +27,8 @@ import config from '../aws-exports'
 import keys from '../keys'
 
 import LikeButton from './LikeButton'
+import ModalPosts from './ModalPosts'
+
 import CreatePost from '../graphQL/CreatePost'
 import CreatePicture from '../graphQL/CreatePicture'
 // import DeletePicture from '../graphQL/DeletePicture'
@@ -283,49 +283,14 @@ class Feed extends React.Component {
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerStyle}>
-          <Modal
-            animationType="slide"
-            transparent={false}
-            onRequestClose={() => { return }}
-            visible={this.state.modalVisible}>
-            <View style={styles.modalContainer}>
-              <View style={styles.postCardStyle}>
-                <Card>
-                  <TextInput
-                    onChangeText={val => this.onChangeText('postContent', val)}
-                    placeholder="Tell us your best..."
-                    value={this.state.postContent}
-                    multiline={true}
-                    maxLength={150}
-                    autoFocus={true} // check for performance issue when true
-                    style={{ height: 150, fontSize: 20, padding: 13 }}
-                  />
-                  <View style={{ alignItems: 'flex-end', padding: 5 }}>
-                    <Text style={{ color: '#fb7777', fontWeight: 'bold' }}>
-                      {150 - this.state.postContent.length}
-                    </Text>
-                  </View>
-                </Card>
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity
-                    onPress={this.hideModal}
-                    style={[styles.twinButtonStyle, { backgroundColor: '#5017AE' }]}>
-                    <Text style={styles.buttonText}>
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={this.createPost}
-                    style={[styles.twinButtonStyle, { backgroundColor: '#f16f69' }]}>
-                    <Text style={styles.buttonText}>
-                      Submit
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
           {/* Open modal to write a post */}
+          <ModalPosts
+            modalVisible={this.state.modalVisible}
+            postContent={this.state.postContent}
+            hideModal={this.hideModal}
+            createPost={this.createPost}
+            onChangeText={val => this.onChangeText('postContent', val)}
+          />
           <TouchableOpacity onPress={this.showModal}>
             <Ionicons style={styles.iconStyle} name="md-create" />
           </TouchableOpacity>
@@ -482,32 +447,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
-  buttonContainer: {
-    marginTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignContent: 'space-between',
-  },
-  twinButtonStyle: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    borderRadius: 3,
-    width: 130,
-    height: 48,
-    flexDirection: 'row'
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: "#fff",
-  },
-  postCardStyle: {
-    marginTop: 45,
-    padding: 20
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#eadee4'
-  }
 })
