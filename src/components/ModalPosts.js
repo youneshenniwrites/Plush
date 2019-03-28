@@ -9,19 +9,19 @@ import {
 
 import { Card, Text } from 'native-base'
 
-const ModalPosts = (props) => (
+const ModalPosts = ({ modalVisible, postContent, onChangeText, hideModal, createPost } = props) => (
   <Modal
     animationType="slide"
     transparent={false}
     onRequestClose={() => { return }}
-    visible={props.modalVisible}>
+    visible={modalVisible}>
     <View style={styles.modalContainer}>
       <View style={styles.postCardStyle}>
         <Card>
           <TextInput
-            onChangeText={props.onChangeText}
+            onChangeText={onChangeText}
             placeholder="Tell us your best..."
-            value={props.postContent}
+            value={postContent}
             multiline={true}
             maxLength={150}
             autoFocus={true} // check for performance issue when true
@@ -29,20 +29,20 @@ const ModalPosts = (props) => (
           />
           <View style={{ alignItems: 'flex-end', padding: 5 }}>
             <Text style={{ color: '#fb7777', fontWeight: 'bold' }}>
-              {150 - props.postContent.length}
+              {150 - postContent.length}
             </Text>
           </View>
         </Card>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            onPress={props.hideModal}
+            onPress={hideModal}
             style={[styles.twinButtonStyle, { backgroundColor: '#5017AE' }]}>
             <Text style={styles.buttonText}>
               Cancel
               </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={props.createPost}
+            onPress={createPost}
             style={[styles.twinButtonStyle, { backgroundColor: '#f16f69' }]}>
             <Text style={styles.buttonText}>
               Submit

@@ -7,13 +7,13 @@ import {
 
 import { Ionicons } from '@expo/vector-icons'
 
-const LikeButton = (props) => (
+const LikeButton = ({ toggleLikePost, color } = props) => (
   <View style={styles.container}>
     <TouchableOpacity
-      onPress={props.toggleLikePost}>
+      onPress={toggleLikePost}>
       <Ionicons
         name='md-heart'
-        style={{ fontSize: 45, color: props.color }}
+        style={{ fontSize: 45, color: color }}
       />
     </TouchableOpacity>
   </View>

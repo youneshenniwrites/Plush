@@ -10,13 +10,13 @@ import { Ionicons } from '@expo/vector-icons'
 
 import LikeButton from './LikeButton'
 
-const PostCard = (props) => (
+const PostCard = ({ post, user, toggleLikePost, deletePostAlert } = props) => (
   <Card style={styles.cardStyle}>
     <View style={styles.cardHeaderStyle}>
       {
-        props.post.postOwnerId === props.user &&
+        post.postOwnerId === user &&
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-          <TouchableOpacity onPress={props.deletePostAlert}>
+          <TouchableOpacity onPress={deletePostAlert}>
             <Ionicons
               style={{ color: '#1f267e', padding: 5, fontSize: 30 }}
               name="md-more"
@@ -27,31 +27,31 @@ const PostCard = (props) => (
     </View>
     <TouchableOpacity>
       <Text style={styles.postBody}>
-        {props.post.postContent}
+        {post.postContent}
       </Text>
     </TouchableOpacity>
     <View style={styles.cardFooterStyle}>
       <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
         <Text style={styles.postUsername}>
-          {props.post.postOwnerUsername}
+          {post.postOwnerUsername}
         </Text>
       </View>
       {/* Logged in user liked this post */}
       {
-        props.post.likes.items.length !== 0 &&
-        props.post.likes.items.filter(obj => obj.likeOwnerId === props.user).length === 1 &&
-        <LikeButton color='#FB7777' toggleLikePost={props.toggleLikePost} />
+        post.likes.items.length !== 0 &&
+        post.likes.items.filter(obj => obj.likeOwnerId === user).length === 1 &&
+        <LikeButton color='#FB7777' toggleLikePost={toggleLikePost} />
       }
       {/* Logged in user did not like this post */}
       {
-        props.post.likes.items.length !== 0 &&
-        props.post.likes.items.filter(obj => obj.likeOwnerId === props.user).length === 0 &&
-        <LikeButton color='#69FB' toggleLikePost={props.toggleLikePost} />
+        post.likes.items.length !== 0 &&
+        post.likes.items.filter(obj => obj.likeOwnerId === user).length === 0 &&
+        <LikeButton color='#69FB' toggleLikePost={toggleLikePost} />
       }
       {/* Post has no likes */}
       {
-        props.post.likes.items.length === 0 &&
-        <LikeButton color='#69FB' toggleLikePost={props.toggleLikePost} />
+        post.likes.items.length === 0 &&
+        <LikeButton color='#69FB' toggleLikePost={toggleLikePost} />
       }
     </View>
   </Card>
