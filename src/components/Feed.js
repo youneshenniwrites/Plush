@@ -3,31 +3,30 @@ import {
   Alert,
   Keyboard,
   StyleSheet,
-  TouchableOpacity,
   View,
   ScrollView,
   RefreshControl
 } from 'react-native'
 
+// Amplify
 import API, { graphqlOperation } from '@aws-amplify/api'
 import Auth from '@aws-amplify/auth'
 import Amplify from '@aws-amplify/core'
 import Storage from '@aws-amplify/storage'
 
+// Third party libs
 import { RNS3 } from 'react-native-aws3'; // for sending pics to S3
-
-import { Ionicons } from '@expo/vector-icons'
 import { ImagePicker, Permissions } from 'expo'
-
-
 import { v4 as uuid } from 'uuid';
 
+// Local components
+import Header from './Header';
+import PostCard from './PostCard'
+import ModalPosts from './ModalPosts'
 import config from '../aws-exports'
 import keys from '../keys'
 
-import ModalPosts from './ModalPosts'
-import PostCard from './PostCard'
-
+// GraphQL components
 import CreatePost from '../graphQL/CreatePost'
 import CreatePicture from '../graphQL/CreatePicture'
 // import DeletePicture from '../graphQL/DeletePicture'
@@ -283,7 +282,13 @@ class Feed extends React.Component {
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerStyle}>
-          {/* Open modal to write a post */}
+          {/* Header */}
+          <Header
+            showModal={this.showModal}
+            accessDevice={this.createPicture}
+            refresh={this.componentDidMount}
+          />
+          {/* Open Modal component to write a post */}
           <ModalPosts
             modalVisible={this.state.modalVisible}
             postContent={this.state.postContent}
@@ -291,16 +296,6 @@ class Feed extends React.Component {
             createPost={this.createPost}
             onChangeText={val => this.onChangeText('postContent', val)}
           />
-          <TouchableOpacity onPress={this.showModal}>
-            <Ionicons style={styles.iconStyle} name="md-create" />
-          </TouchableOpacity>
-          {/* Access device library to add pictures */}
-          <TouchableOpacity onPress={this.createPicture}>
-            <Ionicons style={styles.iconStyle} name="ios-camera" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={this.componentDidMount}>
-            <Ionicons style={styles.iconStyle} name="ios-refresh" />
-          </TouchableOpacity>
         </View>
         <ScrollView
           contentContainerStyle={styles.container}
@@ -326,11 +321,9 @@ class Feed extends React.Component {
             }
             {/* Pictures */}
             {
-              this.state.allPicsURIs.map((uri, index) => {
-                return (
-                  <Image key={index} style={styles.image} source={{ uri: uri }} />
-                )
-              })
+              this.state.allPicsURIs.map((uri, index) => (
+                <Image key={index} style={styles.image} source={{ uri: uri }} />
+              ))
             }
           </View>
         </ScrollView>
@@ -380,9 +373,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  iconStyle: {
-    color: '#5017ae',
-    fontSize: 38
   },
 })
