@@ -1,9 +1,11 @@
 import React from 'react'
 import {
+  View,
   Alert,
+  Image,
   Keyboard,
   StyleSheet,
-  View,
+  Dimensions,
   ScrollView,
   RefreshControl
 } from 'react-native'
@@ -70,7 +72,7 @@ class Feed extends React.Component {
       })
       .catch(err => console.log(err))
     await this.listPosts()
-    // await this.allPicsURIs()
+    await this.allPicsURIs()
     // console.log('List of posts: ', this.state.posts)
     // console.log('List of pictures: ', this.state.pictures)
   }
@@ -222,11 +224,13 @@ class Feed extends React.Component {
     let access = { level: 'public' }
     this.state.pictures.map((picture, index) => {
       let key = picture.file.key
-      key = key.substring(key.indexOf('public/') + 1) // get rid of folder name in key
       Storage.get(key, access)
         .then((response) => {
-          let uri = response.substr(0, response.indexOf('?')) // extract uri from response
-          if (this.state.allImagesURIs.includes(uri)) {
+          // Extract uri from response
+          let uriPartOne = response.substring(0, response.indexOf('public/'))
+          let uriPartTwo = response.substring(response.indexOf('images/'), response.indexOf('?'))
+          let uri = uriPartOne + uriPartTwo
+          if (this.state.allPicsURIs.includes(uri)) {
             console.log('KO')
             return
           } else {
@@ -365,6 +369,8 @@ const ApolloWrapper = compose(
 
 export default ApolloWrapper
 
+let width = Dimensions.get('window').width
+
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
@@ -375,5 +381,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  image: {
+    width: width,
+    height: width,
+    marginBottom: 24
   },
 })
