@@ -1,19 +1,20 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react'
+import { View } from 'react-native'
 import Feed from './src/components/Feed'
 
 // Apollo
-import { Rehydrated } from 'aws-appsync-react';
-import { ApolloProvider } from 'react-apollo';
+import { Rehydrated } from 'aws-appsync-react'
+import { ApolloProvider } from 'react-apollo'
 
 // AppSync
-import AWSAppSyncClient from "aws-appsync";
+import AWSAppSyncClient from "aws-appsync"
 
 // Amplify
-import Amplify, { Auth } from 'aws-amplify';
-import { withAuthenticator } from 'aws-amplify-react-native';
-import awsconfig from './src/aws-exports';
-Amplify.configure(awsconfig);
+import Amplify, { Auth } from 'aws-amplify'
+import { withAuthenticator } from 'aws-amplify-react-native'
+import awsconfig from './src/aws-exports'
+
+Amplify.configure(awsconfig)
 
 // Create a client
 const GRAPHQL_API_REGION = awsconfig.aws_appsync_region
@@ -32,12 +33,12 @@ const client = new AWSAppSyncClient({
   },
   complexObjectsCredentials: () => Auth.currentCredentials(),
   disableOffline: true
-});
+})
 
 class App extends React.Component {
   render() {
     return (
-      <View style={styles.container}>
+      <View style={{ flex: 1 }}>
         <Feed
           options={{
             bucket: S3_BUCKET_NAME,
@@ -50,7 +51,7 @@ class App extends React.Component {
 }
 
 // Wrap the App with Amplify HOC
-const AppWithAuth = withAuthenticator(App, true);
+const AppWithAuth = withAuthenticator(App, true)
 
 export default () => (
   <ApolloProvider client={client}>
@@ -58,10 +59,4 @@ export default () => (
       <AppWithAuth />
     </Rehydrated>
   </ApolloProvider>
-);
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
+)

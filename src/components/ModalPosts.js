@@ -53,6 +53,7 @@ const ModalPosts = ({ modalVisible, postContent, onChangeText, hideModal, create
     </View>
   </Modal>
 )
+
 export default ModalPosts
 
 const styles = StyleSheet.create({

@@ -332,7 +332,7 @@ class Feed extends React.Component {
   }
 }
 
-export default compose(
+const ApolloWrapper = compose(
   graphql(CreatePicture, {
     props: (props) => ({
       onAddPicture: (picture) => {
@@ -362,6 +362,8 @@ export default compose(
   //   }),
   // }),
 )(Feed)
+
+export default ApolloWrapper
 
 const styles = StyleSheet.create({
   container: {

@@ -56,6 +56,7 @@ const PostCard = ({ post, user, toggleLikePost, deletePostAlert } = props) => (
     </View>
   </Card>
 )
+
 export default PostCard
 
 const styles = StyleSheet.create({
