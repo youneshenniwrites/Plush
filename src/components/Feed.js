@@ -7,8 +7,11 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
-  RefreshControl
+  RefreshControl,
+  TouchableOpacity,
 } from 'react-native'
+
+import { Ionicons } from '@expo/vector-icons'
 
 // Amplify
 import API, { graphqlOperation } from '@aws-amplify/api'
@@ -24,6 +27,7 @@ import { v4 as uuid } from 'uuid';
 // Local components
 import Header from './Header';
 import PostCard from './PostCard'
+// import PictureCard from './PictureCard'
 import ModalPosts from './ModalPosts'
 import config from '../aws-exports'
 import keys from '../keys'
@@ -32,8 +36,9 @@ import keys from '../keys'
 import CreatePost from '../graphQL/CreatePost'
 import CreatePicture from '../graphQL/CreatePicture'
 // import DeletePicture from '../graphQL/DeletePicture'
-import CreateLike from '../graphQL/CreateLike'
-import DeleteLike from '../graphQL/DeleteLike'
+import CreateLikePost from '../graphQL/CreateLikePost'
+import CreateLikePicture from '../graphQL/CreateLikePicture'
+import DeleteLikePost from '../graphQL/DeleteLikePost'
 import DeletePost from '../graphQL/DeletePost'
 import listPosts from '../graphQL/listPosts'
 import listPictures from '../graphQL/listPictures'
@@ -231,10 +236,10 @@ class Feed extends React.Component {
           let uriPartTwo = response.substring(response.indexOf('images/'), response.indexOf('?'))
           let uri = uriPartOne + uriPartTwo
           if (this.state.allPicsURIs.includes(uri)) {
-            console.log('KO')
+            // console.log('KO')
             return
           } else {
-            console.log('OK')
+            // console.log('OK')
             this.setState(prevState => ({
               allPicsURIs: [...prevState.allPicsURIs, uri]
             }))
@@ -250,34 +255,55 @@ class Feed extends React.Component {
       obj => obj.likeOwnerId === loggedInUser
     )
     if (likeUserObject.length !== 0) {
-      await this.deleteLike(likeUserObject)
+      await this.deleteLikePost(likeUserObject)
       return
     }
-    await this.createLike(post)
+    await this.createLikePost(post)
   }
 
-  createLike = async (post) => {
+  createLikePost = async (post) => {
     const postId = await post['id']
     const like = {
+      id: postId,
       likeOwnerId: this.state.likeOwnerId,
       likeOwnerUsername: this.state.likeOwnerUsername,
-      id: postId,
     }
     try {
-      await API.graphql(graphqlOperation(CreateLike, like))
+      await API.graphql(graphqlOperation(CreateLikePost, like))
       await this.componentDidMount()
     } catch (err) {
       console.log('Error creating like.', err)
     }
   }
 
-  deleteLike = async (likeUserObject) => {
+  deleteLikePost = async (likeUserObject) => {
     const likeId = await likeUserObject[0]['id']
     try {
-      await API.graphql(graphqlOperation(DeleteLike, { id: likeId }))
+      await API.graphql(graphqlOperation(DeleteLikePost, { id: likeId }))
       await this.componentDidMount()
     } catch (err) {
       console.log('Error deleting like.', err)
+    }
+  }
+
+  // Create like method for pictures. To be amended.
+  createLikePicture = async (uri) => {
+    const key = await uri.substring(uri.indexOf('images/'))
+    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
+    // console.log(pictureObject)
+    const pictureId = await pictureObject[0].id
+    const like = {
+      id: pictureId,
+      likeOwnerId: this.state.likeOwnerId,
+      likeOwnerUsername: this.state.likeOwnerUsername,
+    }
+    try {
+      await API.graphql(graphqlOperation(CreateLikePicture, like))
+      this.setState({ isLiked: true })
+      console.log('Like created.')
+      await this.componentDidMount()
+    } catch (err) {
+      console.log('Error creating like.', err)
     }
   }
 
@@ -311,7 +337,7 @@ class Feed extends React.Component {
           }
         >
           <View style={{ flex: 1, alignItems: 'center' }}>
-            {/* Posts */}
+            {/* Posts component */}
             {
               this.state.posts.map((post, index) => (
                 <PostCard
@@ -323,10 +349,24 @@ class Feed extends React.Component {
                 />
               ))
             }
-            {/* Pictures */}
+            {/* Pictures component */}
             {
               this.state.allPicsURIs.map((uri, index) => (
-                <Image key={index} style={styles.image} source={{ uri: uri }} />
+                <View key={index}>
+                  <Image style={styles.image} source={{ uri: uri }} />
+                  <TouchableOpacity
+                    onPress={
+                      () => {
+                        // this.createLikePicture(uri)
+                        console.log(this.state.pictures)
+                      }
+                    }>
+                    <Ionicons
+                      name='md-heart'
+                      style={{ fontSize: 45, color: '#69ff' }}
+                    />
+                  </TouchableOpacity>
+                </View>
               ))
             }
           </View>

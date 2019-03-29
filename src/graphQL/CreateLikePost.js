@@ -1,4 +1,4 @@
-const CreateLike = `
+const CreateLikePost = `
   mutation (
     $id:ID!,
     $likeOwnerUsername: String!, 
@@ -17,7 +17,7 @@ const CreateLike = `
     }
   }
 `
-export default CreateLike;
+export default CreateLikePost
 
 
 
