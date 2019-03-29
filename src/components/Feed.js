@@ -367,7 +367,37 @@ class Feed extends React.Component {
               this.state.allPicsURIs.map((uri, index) => (
                 <View key={index}>
                   <Image style={styles.image} source={{ uri: uri }} />
-                  {/* Picture liked */}
+                  {/* Logged in user liked this picture */}
+                  {
+                    pictures.filter(
+                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                    )[0].likes.items.length !== 0 &&
+                    pictures.filter(
+                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                    )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 1 &&
+                    <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
+                      <Ionicons
+                        name='md-heart'
+                        style={{ fontSize: 45, color: '#FB7777' }}
+                      />
+                    </TouchableOpacity>
+                  }
+                  {/* Logged in user did not like this picture */}
+                  {
+                    pictures.filter(
+                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                    )[0].likes.items.length !== 0 &&
+                    pictures.filter(
+                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                    )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 0 &&
+                    <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
+                      <Ionicons
+                        name='md-heart'
+                        style={{ fontSize: 45, color: '#69FF' }}
+                      />
+                    </TouchableOpacity>
+                  }
+                  {/* Picture has no likes */}
                   {
                     pictures.filter(
                       pic => pic.file.key === uri.substring(uri.indexOf('images/'))
@@ -376,18 +406,6 @@ class Feed extends React.Component {
                       <Ionicons
                         name='md-heart'
                         style={{ fontSize: 45, color: '#69FF' }}
-                      />
-                    </TouchableOpacity>
-                  }
-                  {/* Picture liked */}
-                  {
-                    pictures.filter(
-                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
-                    )[0].likes.items.length == !0 &&
-                    <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
-                      <Ionicons
-                        name='md-heart'
-                        style={{ fontSize: 45, color: '#FB7777' }}
                       />
                     </TouchableOpacity>
                   }
