@@ -276,6 +276,39 @@ class Feed extends React.Component {
     }
   }
 
+  toggleLikePictures = async (uri) => {
+    const key = await uri.substring(uri.indexOf('images/'))
+    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
+    const loggedInUser = await this.state.postOwnerId
+    const likeUserObject = await pictureObject[0].likes.items.filter(
+      obj => obj.likeOwnerId === loggedInUser
+    )
+    if (likeUserObject.length !== 0) {
+      await this.deleteLikePost(likeUserObject)
+      return
+    }
+    await this.createLikePicture(uri)
+  }
+
+  // Create like method for pictures
+  createLikePicture = async (uri) => {
+    const key = await uri.substring(uri.indexOf('images/'))
+    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
+    const pictureId = await pictureObject[0].id
+    const like = {
+      id: pictureId,
+      likeOwnerId: this.state.likeOwnerId,
+      likeOwnerUsername: this.state.likeOwnerUsername,
+    }
+    try {
+      await API.graphql(graphqlOperation(CreateLikePicture, like))
+      await this.componentDidMount()
+    } catch (err) {
+      console.log('Error creating like.', err)
+    }
+  }
+
+  // Works for both posts and pictures
   deleteLikePost = async (likeUserObject) => {
     const likeId = await likeUserObject[0]['id']
     try {
@@ -286,29 +319,9 @@ class Feed extends React.Component {
     }
   }
 
-  // Create like method for pictures. To be amended.
-  createLikePicture = async (uri) => {
-    const key = await uri.substring(uri.indexOf('images/'))
-    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
-    // console.log(pictureObject)
-    const pictureId = await pictureObject[0].id
-    const like = {
-      id: pictureId,
-      likeOwnerId: this.state.likeOwnerId,
-      likeOwnerUsername: this.state.likeOwnerUsername,
-    }
-    try {
-      await API.graphql(graphqlOperation(CreateLikePicture, like))
-      this.setState({ isLiked: true })
-      console.log('Like created.')
-      await this.componentDidMount()
-    } catch (err) {
-      console.log('Error creating like.', err)
-    }
-  }
-
   render() {
     let loggedInUser = this.state.postOwnerId
+    let { pictures } = this.state
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerStyle}>
@@ -354,18 +367,30 @@ class Feed extends React.Component {
               this.state.allPicsURIs.map((uri, index) => (
                 <View key={index}>
                   <Image style={styles.image} source={{ uri: uri }} />
-                  <TouchableOpacity
-                    onPress={
-                      () => {
-                        // this.createLikePicture(uri)
-                        console.log(this.state.pictures)
-                      }
-                    }>
-                    <Ionicons
-                      name='md-heart'
-                      style={{ fontSize: 45, color: '#69ff' }}
-                    />
-                  </TouchableOpacity>
+                  {/* Picture liked */}
+                  {
+                    pictures.filter(
+                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                    )[0].likes.items.length === 0 &&
+                    <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
+                      <Ionicons
+                        name='md-heart'
+                        style={{ fontSize: 45, color: '#69FF' }}
+                      />
+                    </TouchableOpacity>
+                  }
+                  {/* Picture liked */}
+                  {
+                    pictures.filter(
+                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                    )[0].likes.items.length == !0 &&
+                    <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
+                      <Ionicons
+                        name='md-heart'
+                        style={{ fontSize: 45, color: '#FB7777' }}
+                      />
+                    </TouchableOpacity>
+                  }
                 </View>
               ))
             }
