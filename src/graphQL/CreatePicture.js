@@ -1,4 +1,4 @@
-import gql from 'graphql-tag';
+import gql from 'graphql-tag'
 
 const CreatePicture = gql`
 mutation ($input: CreatePictureInput!) {
@@ -13,9 +13,9 @@ mutation ($input: CreatePictureInput!) {
       key
     }
   }
-}`;
+}`
 
-export default CreatePicture;
+export default CreatePicture
 
 
 

@@ -12,6 +12,7 @@ import {
 } from 'react-native'
 
 import { Ionicons } from '@expo/vector-icons'
+import { Card, Text } from 'native-base'
 
 // Amplify
 import API, { graphqlOperation } from '@aws-amplify/api'
@@ -35,7 +36,7 @@ import keys from '../keys'
 // GraphQL components
 import CreatePost from '../graphQL/CreatePost'
 import CreatePicture from '../graphQL/CreatePicture'
-// import DeletePicture from '../graphQL/DeletePicture'
+import DeletePicture from '../graphQL/DeletePicture'
 import CreateLikePost from '../graphQL/CreateLikePost'
 import CreateLikePicture from '../graphQL/CreateLikePicture'
 import DeleteLikePost from '../graphQL/DeleteLikePost'
@@ -166,6 +167,18 @@ class Feed extends React.Component {
       this.setState({ image: uri })
       await this.uploadToS3AndRecordInDynamodb(this.state.image)
       await this.componentDidMount()
+    }
+  }
+
+  deletePicture = async (uri) => {
+    const key = await uri.substring(uri.indexOf('images/'))
+    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
+    const pictureId = await pictureObject[0].id
+    try {
+      await API.graphql(graphqlOperation(DeletePicture, { id: pictureId }))
+      await this.componentDidMount()
+    } catch (err) {
+      console.log('Error deleting post.', err)
     }
   }
 
@@ -351,7 +364,7 @@ class Feed extends React.Component {
         >
           <View style={{ flex: 1, alignItems: 'center' }}>
             {/* Posts component */}
-            {
+            {/* {
               this.state.posts.map((post, index) => (
                 <PostCard
                   key={index}
@@ -361,55 +374,77 @@ class Feed extends React.Component {
                   toggleLikePost={() => this.toggleLikePost(post)}
                 />
               ))
-            }
+            } */}
             {/* Pictures component */}
             {
               this.state.allPicsURIs.map((uri, index) => (
-                <View key={index}>
-                  <Image style={styles.image} source={{ uri: uri }} />
-                  {/* Logged in user liked this picture */}
-                  {
-                    pictures.filter(
-                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
-                    )[0].likes.items.length !== 0 &&
-                    pictures.filter(
-                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
-                    )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 1 &&
-                    <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
-                      <Ionicons
-                        name='md-heart'
-                        style={{ fontSize: 45, color: '#FB7777' }}
-                      />
-                    </TouchableOpacity>
-                  }
-                  {/* Logged in user did not like this picture */}
-                  {
-                    pictures.filter(
-                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
-                    )[0].likes.items.length !== 0 &&
-                    pictures.filter(
-                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
-                    )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 0 &&
-                    <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
-                      <Ionicons
-                        name='md-heart'
-                        style={{ fontSize: 45, color: '#69FF' }}
-                      />
-                    </TouchableOpacity>
-                  }
-                  {/* Picture has no likes */}
-                  {
-                    pictures.filter(
-                      pic => pic.file.key === uri.substring(uri.indexOf('images/'))
-                    )[0].likes.items.length === 0 &&
-                    <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
-                      <Ionicons
-                        name='md-heart'
-                        style={{ fontSize: 45, color: '#69FF' }}
-                      />
-                    </TouchableOpacity>
-                  }
-                </View>
+                <Card key={index} style={styles.cardStyle}>
+                  <View style={styles.cardHeaderStyle}>
+                    {/* {
+                      post.postOwnerId === user &&
+                      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
+                        <TouchableOpacity onPress={deletePostAlert}>
+                          <Ionicons
+                            style={{ color: '#1f267e', padding: 5, fontSize: 30 }}
+                            name="md-more"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    } */}
+                    <Image style={styles.image} source={{ uri: uri }} />
+                    <View style={styles.cardFooterStyle}>
+                      <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+                        <Text style={styles.postUsername}>
+                          {pictures.filter(
+                            pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                          )[0].pictureOwnerUsername}
+                        </Text>
+                      </View>
+                      {/* Logged in user liked this picture */}
+                      {
+                        pictures.filter(
+                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                        )[0].likes.items.length !== 0 &&
+                        pictures.filter(
+                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                        )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 1 &&
+                        <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
+                          <Ionicons
+                            name='md-heart'
+                            style={{ fontSize: 45, color: '#FB7777' }}
+                          />
+                        </TouchableOpacity>
+                      }
+                      {/* Logged in user did not like this picture */}
+                      {
+                        pictures.filter(
+                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                        )[0].likes.items.length !== 0 &&
+                        pictures.filter(
+                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                        )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 0 &&
+                        <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
+                          <Ionicons
+                            name='md-heart'
+                            style={{ fontSize: 45, color: '#69FF' }}
+                          />
+                        </TouchableOpacity>
+                      }
+                      {/* Picture has no likes */}
+                      {
+                        pictures.filter(
+                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                        )[0].likes.items.length === 0 &&
+                        <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
+                          <Ionicons
+                            name='md-heart'
+                            style={{ fontSize: 45, color: '#69FF' }}
+                          />
+                        </TouchableOpacity>
+                      }
+                    </View>
+                  </View>
+                </Card>
               ))
             }
           </View>
@@ -436,18 +471,18 @@ const ApolloWrapper = compose(
       }
     }),
   }),
-  // graphql(DeletePicture, {
-  //   props: (props) => ({
-  //     onRemovePost: (picture) => {
-  //       props.mutate({
-  //         variables: picture,
-  //         optimisticResponse: () => ({
-  //           deletePost: { ...picture, __typename: 'Picture' }
-  //         }),
-  //       })
-  //     }
-  //   }),
-  // }),
+  graphql(DeletePicture, {
+    props: (props) => ({
+      onRemovePost: (picture) => {
+        props.mutate({
+          variables: picture,
+          optimisticResponse: () => ({
+            deletePost: { ...picture, __typename: 'Picture' }
+          }),
+        })
+      }
+    }),
+  }),
 )(Feed)
 
 export default ApolloWrapper
@@ -465,9 +500,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  cardStyle: {
+    flex: 1,
+    backgroundColor: '#d0d9ed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20
+  },
   image: {
     width: width,
     height: width,
     marginBottom: 24
+  },
+  cardFooterStyle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 10,
+    paddingRight: 10,
+  },
+  postUsername: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1f267e'
   },
 })
