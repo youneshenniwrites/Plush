@@ -23,7 +23,7 @@ import Storage from '@aws-amplify/storage'
 // Third party libs
 import { RNS3 } from 'react-native-aws3'; // for sending pics to S3
 import { ImagePicker, Permissions } from 'expo'
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid } from 'uuid'
 
 // Local components
 import Header from './Header';
@@ -60,7 +60,6 @@ class Feed extends React.Component {
     postContent: '',
     postOwnerUsername: '',
     likeOwnerUsername: '',
-    image: null,
   }
 
 
@@ -104,6 +103,7 @@ class Feed extends React.Component {
       })
   }
 
+  // Query both posts and pictutres 
   listPosts = async () => {
     try {
       const postsData = await API.graphql(graphqlOperation(listPosts))
@@ -158,62 +158,42 @@ class Feed extends React.Component {
   // Get pictures from device then upload them to AWS S3 and store their records in DynamobDB
   createPicture = async () => {
     await this.askPermissionsAsync()
-    const { cancelled, uri } = await ImagePicker.launchImageLibraryAsync(
+    const result = await ImagePicker.launchImageLibraryAsync(
       {
         allowsEditing: false,
       }
     )
-    if (!cancelled) {
-      this.setState({ image: uri })
-      await this.uploadToS3AndRecordInDynamodb(this.state.image)
-      await this.componentDidMount()
+    if (!result.cancelled) {
+      this.uploadToS3AndRecordInDynamodb(result.uri)
     }
-  }
-
-  deletePicture = async (uri) => {
-    const key = await uri.substring(uri.indexOf('images/'))
-    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
-    const pictureId = await pictureObject[0].id
-    try {
-      await API.graphql(graphqlOperation(DeletePicture, { id: pictureId }))
-      await this.componentDidMount()
-    } catch (err) {
-      console.log('Error deleting post.', err)
-    }
-  }
-
-  // Give Expo access to device library
-  askPermissionsAsync = async () => {
-    await Permissions.askAsync(Permissions.CAMERA_ROLL)
   }
 
   uploadToS3AndRecordInDynamodb = async (uri) => {
     const { bucket, region } = this.props.options
     let picture = {
       uri: uri,
-      name: uuid(),
+      name: uuid() + '.jpeg',
       type: "image/jpeg",
       bucket,
       region,
     }
     const config = {
-      keyPrefix: "images/public/",
+      keyPrefix: "public/",
       bucket,
       region,
       accessKey: keys.accessKey,
       secretKey: keys.secretKey,
       successActionStatus: 201
     }
-    const folder = 'images'
     const visibility = 'public'
     RNS3.put(picture, config)
       .then(response => {
         if (response.status !== 201) {
-          throw new Error("Failed to upload image to S3");
+          throw new Error("Failed to upload image to S3")
         } else {
-          console.log('The following file has been uploaded to AWS S3:', response)
+          console.log('Upload successful.')
           const { type: mimeType } = response;
-          const key = `${folder}/${visibility}/${picture.name}`;
+          const key = `${picture.name}`
           const file = {
             bucket,
             region,
@@ -234,25 +214,49 @@ class Feed extends React.Component {
       })
   }
 
+  deletePicture = async (uri) => {
+    const key = await uri.substring(uri.indexOf('public/') + 7)
+    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
+    const pictureId = await pictureObject[0].id
+    try {
+      // await API.graphql(graphqlOperation(DeletePicture, { id: pictureId }))
+      await this.props.onRemovePicture({ id: pictureId })
+      await this.removeImageFromS3(key)
+      // await this.componentDidMount()
+    } catch (err) {
+      console.log('Error deleting post.', err)
+    }
+  }
+
+  removeImageFromS3 = async (key) => {
+    await Storage.remove(key)
+      .then(result => console.log('Deleted', result))
+      .catch(err => console.log(err))
+  }
+
+  // Give Expo access to device library
+  askPermissionsAsync = async () => {
+    await Permissions.askAsync(Permissions.CAMERA_ROLL)
+  }
+
   allPicsURIs = () => {
 		/* 
 		Perform a get call with Storage API to retrieve the URI of each picture.
-		We then store all uris in the state to be called in the render method.
+		We then store all URIs in the state to be called in the render method.
 		*/
     let access = { level: 'public' }
+    // let allURIs = []
+    let key
     this.state.pictures.map((picture, index) => {
-      let key = picture.file.key
+      key = picture.file.key
       Storage.get(key, access)
         .then((response) => {
           // Extract uri from response
-          let uriPartOne = response.substring(0, response.indexOf('public/'))
-          let uriPartTwo = response.substring(response.indexOf('images/'), response.indexOf('?'))
-          let uri = uriPartOne + uriPartTwo
+          let uri = response.substring(0, response.indexOf('?'))
+          // allURIs.push(uri)
           if (this.state.allPicsURIs.includes(uri)) {
-            // console.log('KO')
             return
           } else {
-            // console.log('OK')
             this.setState(prevState => ({
               allPicsURIs: [...prevState.allPicsURIs, uri]
             }))
@@ -260,6 +264,7 @@ class Feed extends React.Component {
         })
         .catch(err => console.log(err))
     })
+    // console.log(allURIs)
   }
 
   toggleLikePost = async (post) => {
@@ -290,7 +295,7 @@ class Feed extends React.Component {
   }
 
   toggleLikePictures = async (uri) => {
-    const key = await uri.substring(uri.indexOf('images/'))
+    const key = await uri.substring(uri.indexOf('public/') + 7)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
     const loggedInUser = await this.state.postOwnerId
     const likeUserObject = await pictureObject[0].likes.items.filter(
@@ -305,7 +310,7 @@ class Feed extends React.Component {
 
   // Create like method for pictures
   createLikePicture = async (uri) => {
-    const key = await uri.substring(uri.indexOf('images/'))
+    const key = await uri.substring(uri.indexOf('public/') + 7)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
     const pictureId = await pictureObject[0].id
     const like = {
@@ -334,7 +339,7 @@ class Feed extends React.Component {
 
   render() {
     let loggedInUser = this.state.postOwnerId
-    let { pictures } = this.state
+    let { pictures, allPicsURIs } = this.state
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerStyle}>
@@ -377,9 +382,10 @@ class Feed extends React.Component {
             } */}
             {/* Pictures component */}
             {
-              this.state.allPicsURIs.map((uri, index) => (
+              allPicsURIs.map((uri, index) => (
                 <Card key={index} style={styles.cardStyle}>
                   <View style={styles.cardHeaderStyle}>
+                    {/* Not a working code. Here to add delete image alert. */}
                     {/* {
                       post.postOwnerId === user &&
                       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
@@ -395,18 +401,33 @@ class Feed extends React.Component {
                     <View style={styles.cardFooterStyle}>
                       <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
                         <Text style={styles.postUsername}>
-                          {pictures.filter(
-                            pic => pic.file.key === uri.substring(uri.indexOf('images/'))
-                          )[0].pictureOwnerUsername}
+                          {
+                            pictures.filter(
+                              pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+                            )[0].pictureOwnerUsername
+                          }
                         </Text>
                       </View>
+                      {
+                        pictures.filter(
+                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+                        )[0].pictureOwnerId === loggedInUser &&
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
+                          <TouchableOpacity onPress={() => this.deletePicture(uri)}>
+                            <Ionicons
+                              style={{ color: '#1f267e', fontSize: 30 }}
+                              name="md-more"
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      }
                       {/* Logged in user liked this picture */}
                       {
                         pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
                         )[0].likes.items.length !== 0 &&
                         pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
                         )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 1 &&
                         <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
                           <Ionicons
@@ -418,10 +439,10 @@ class Feed extends React.Component {
                       {/* Logged in user did not like this picture */}
                       {
                         pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
                         )[0].likes.items.length !== 0 &&
                         pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
                         )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 0 &&
                         <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
                           <Ionicons
@@ -433,7 +454,7 @@ class Feed extends React.Component {
                       {/* Picture has no likes */}
                       {
                         pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('images/'))
+                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
                         )[0].likes.items.length === 0 &&
                         <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
                           <Ionicons
@@ -473,11 +494,11 @@ const ApolloWrapper = compose(
   }),
   graphql(DeletePicture, {
     props: (props) => ({
-      onRemovePost: (picture) => {
+      onRemovePicture: (picture) => {
         props.mutate({
-          variables: picture,
+          variables: { input: picture },
           optimisticResponse: () => ({
-            deletePost: { ...picture, __typename: 'Picture' }
+            deletePicture: { ...picture, __typename: 'Picture' }
           }),
         })
       }

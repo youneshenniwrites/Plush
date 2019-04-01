@@ -10,7 +10,8 @@ import { ApolloProvider } from 'react-apollo'
 import AWSAppSyncClient from "aws-appsync"
 
 // Amplify
-import Amplify, { Auth } from 'aws-amplify'
+import Auth from '@aws-amplify/auth'
+import Amplify from '@aws-amplify/core'
 import { withAuthenticator } from 'aws-amplify-react-native'
 import awsconfig from './src/aws-exports'
 
