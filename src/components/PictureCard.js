@@ -12,32 +12,29 @@ import { Ionicons } from '@expo/vector-icons'
 
 import LikePictureButton from './LikePictureButton'
 
-const PictureCard = ({ pictures, uri, user, toggleLikePicture, deletePictureAlert } = props) => (
+const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } = props) => (
   <Card style={styles.cardStyle}>
     <Image style={styles.image} source={{ uri: uri }} />
     <View style={styles.cardFooterStyle}>
-      <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-        <Text style={styles.postUsername}>
-          {
-            pictures.filter(
-              pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-            )[0].pictureOwnerUsername
-          }
-        </Text>
-      </View>
       {
         pictures.filter(
           pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
         )[0].pictureOwnerId === user &&
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-          <TouchableOpacity onPress={deletePictureAlert}>
-            <Ionicons
-              style={{ color: '#1f267e', fontSize: 30, padding: 10 }}
-              name="md-more"
-            />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={optionsPicture}>
+          <Ionicons
+            style={{ color: '#1f267e', fontSize: 45, marginLeft: 10 }}
+            name="md-more"
+          />
+        </TouchableOpacity>
       }
+      {/* Show username of picture owner */}
+      <Text style={styles.postUsername}>
+        {
+          pictures.filter(
+            pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+          )[0].pictureOwnerUsername
+        }
+      </Text>
       {/* Logged in user liked this picture */}
       {
         pictures.filter(
@@ -94,8 +91,9 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   postUsername: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
+    marginLeft: 20,
     color: '#1f267e'
   },
 })

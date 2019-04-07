@@ -2,11 +2,11 @@ import React from 'react'
 import {
   View,
   Alert,
-  Image,
   Keyboard,
   StyleSheet,
   ScrollView,
   RefreshControl,
+  ActionSheetIOS
 } from 'react-native'
 
 // Amplify
@@ -58,7 +58,6 @@ class Feed extends React.Component {
     postOwnerUsername: '',
     likeOwnerUsername: '',
   }
-
 
   componentDidMount = async () => {
     await Auth.currentAuthenticatedUser()
@@ -173,6 +172,7 @@ class Feed extends React.Component {
 
   uploadToS3AndRecordInDynamodb = async (uri) => {
     const { bucket, region } = this.props.options
+    const visibility = 'public'
     let picture = {
       uri: uri,
       name: uuid() + '.jpeg',
@@ -182,27 +182,20 @@ class Feed extends React.Component {
     }
     const config = {
       keyPrefix: "public/",
-      bucket,
-      region,
       accessKey: keys.accessKey,
       secretKey: keys.secretKey,
-      successActionStatus: 201
+      successActionStatus: 201,
+      bucket,
+      region,
     }
-    const visibility = 'public'
     RNS3.put(picture, config)
       .then(response => {
         if (response.status !== 201) {
           throw new Error("Failed to upload image to S3")
         } else {
           console.log('Upload successful.')
-          const { type: mimeType } = response;
           const key = `${picture.name}`
-          const file = {
-            bucket,
-            region,
-            key,
-            mimeType
-          }
+          const file = { bucket, region, key }
           // Apollo mutation to create a picture
           this.props.onAddPicture(
             {
@@ -242,17 +235,41 @@ class Feed extends React.Component {
     })
   }
 
-  deletePictureAlert = (uri) => {
-    Alert.alert(
-      'Delete Picture',
-      'Are you sure you want to delete this picture?',
-      [
-        { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
-        { text: 'OK', onPress: () => this.deletePicture(uri) },
-      ],
-      { cancelable: false }
+  /* 
+  This method allows you to:
+  1 - Report inappropriate content.
+  2 - Delete your own pictures.
+  */
+  optionsPicture = (uri) => {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: ['Cancel', 'Report', 'Remove'],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 0,
+      },
+      (buttonIndex) => {
+        // Flag inappropriate content
+        if (buttonIndex === 1) {
+          console.log('Flagged')
+          // Do something here!
+        }
+        if (buttonIndex === 2) {
+          // Delete a picture
+          Alert.alert(
+            'Remove picture',
+            'Are you sure you want to delete this picture?',
+            [
+              { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
+              { text: 'OK', onPress: () => this.deletePicture(uri) },
+            ],
+            { cancelable: false }
+          )
+        }
+      },
     )
   }
+
+  // Method to blur or hide the flagged content.
 
   deletePicture = async (uri) => {
     const { allPicsURIs } = this.state
@@ -391,7 +408,7 @@ class Feed extends React.Component {
                 uri={uri}
                 pictures={pictures}
                 user={loggedInUser}
-                deletePictureAlert={() => this.deletePictureAlert(uri)}
+                optionsPicture={() => this.optionsPicture(uri)}
                 toggleLikePicture={() => this.toggleLikePicture(uri)}
               />
             ))
