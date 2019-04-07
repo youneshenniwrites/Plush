@@ -7,7 +7,7 @@ import {
 
 import { Ionicons } from '@expo/vector-icons'
 
-const LikeButton = ({ toggleLikePost, color } = props) => (
+const LikePostButton = ({ toggleLikePost, color } = props) => (
   <View style={styles.container}>
     <TouchableOpacity
       onPress={toggleLikePost}>
@@ -18,7 +18,7 @@ const LikeButton = ({ toggleLikePost, color } = props) => (
     </TouchableOpacity>
   </View>
 )
-export default LikeButton
+export default LikePostButton
 
 const styles = StyleSheet.create({
   container: {

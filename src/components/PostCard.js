@@ -8,7 +8,7 @@ import {
 import { Card, Text } from 'native-base'
 import { Ionicons } from '@expo/vector-icons'
 
-import LikeButton from './LikeButton'
+import LikePostButton from './LikePostButton'
 
 const PostCard = ({ post, user, toggleLikePost, deletePostAlert } = props) => (
   <Card style={styles.cardStyle}>
@@ -40,18 +40,18 @@ const PostCard = ({ post, user, toggleLikePost, deletePostAlert } = props) => (
       {
         post.likes.items.length !== 0 &&
         post.likes.items.filter(obj => obj.likeOwnerId === user).length === 1 &&
-        <LikeButton color='#FB7777' toggleLikePost={toggleLikePost} />
+        <LikePostButton color='#FB7777' toggleLikePost={toggleLikePost} />
       }
       {/* Logged in user did not like this post */}
       {
         post.likes.items.length !== 0 &&
         post.likes.items.filter(obj => obj.likeOwnerId === user).length === 0 &&
-        <LikeButton color='#69FB' toggleLikePost={toggleLikePost} />
+        <LikePostButton color='#69FB' toggleLikePost={toggleLikePost} />
       }
       {/* Post has no likes */}
       {
         post.likes.items.length === 0 &&
-        <LikeButton color='#69FB' toggleLikePost={toggleLikePost} />
+        <LikePostButton color='#69FB' toggleLikePost={toggleLikePost} />
       }
     </View>
   </Card>

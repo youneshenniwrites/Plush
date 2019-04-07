@@ -5,14 +5,9 @@ import {
   Image,
   Keyboard,
   StyleSheet,
-  Dimensions,
   ScrollView,
   RefreshControl,
-  TouchableOpacity,
 } from 'react-native'
-
-import { Ionicons } from '@expo/vector-icons'
-import { Card, Text } from 'native-base'
 
 // Amplify
 import API, { graphqlOperation } from '@aws-amplify/api'
@@ -28,8 +23,10 @@ import { v4 as uuid } from 'uuid'
 // Local components
 import Header from './Header';
 import PostCard from './PostCard'
-// import PictureCard from './PictureCard'
+import PictureCard from './PictureCard'
 import ModalPosts from './ModalPosts'
+
+// Config imports
 import config from '../aws-exports'
 import keys from '../keys'
 
@@ -78,8 +75,6 @@ class Feed extends React.Component {
       .catch(err => console.log(err))
     await this.listPosts()
     await this.allPicsURIs()
-    // console.log('List of posts: ', this.state.posts)
-    // console.log('List of pictures: ', this.state.pictures)
   }
 
   // Modal posts methods
@@ -165,15 +160,15 @@ class Feed extends React.Component {
     )
     if (!result.cancelled) {
       await this.uploadToS3AndRecordInDynamodb(result.uri)
+        .then(Alert.alert(
+          'Success',
+          'Your picture was uploaded to the contest.',
+          [
+            { text: 'Done', onPress: () => this.componentDidMount() },
+          ],
+          { cancelable: false }
+        ))
     }
-    Alert.alert(
-      'Success',
-      'Your picture was uploaded to the contest.',
-      [
-        { text: 'Done', onPress: () => this.componentDidMount() },
-      ],
-      { cancelable: false }
-    )
   }
 
   uploadToS3AndRecordInDynamodb = async (uri) => {
@@ -247,8 +242,8 @@ class Feed extends React.Component {
     })
   }
 
-  deletePictureAlert = async (uri) => {
-    await Alert.alert(
+  deletePictureAlert = (uri) => {
+    Alert.alert(
       'Delete Picture',
       'Are you sure you want to delete this picture?',
       [
@@ -315,7 +310,7 @@ class Feed extends React.Component {
     }
   }
 
-  toggleLikePictures = async (uri) => {
+  toggleLikePicture = async (uri) => {
     const key = await uri.substring(uri.indexOf('public/') + 7)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
     const loggedInUser = await this.state.postOwnerId
@@ -388,96 +383,31 @@ class Feed extends React.Component {
             />
           }
         >
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            {/* Posts component */}
-            {
-              posts.map((post, index) => (
-                <PostCard
-                  key={index}
-                  post={post}
-                  user={loggedInUser}
-                  deletePostAlert={() => this.deletePostAlert(post)}
-                  toggleLikePost={() => this.toggleLikePost(post)}
-                />
-              ))
-            }
-            {/* Pictures component */}
-            {
-              allPicsURIs.map((uri, index) => (
-                <Card key={index} style={styles.cardStyle}>
-                  <View style={styles.cardHeaderStyle}>
-                    <Image style={styles.image} source={{ uri: uri }} />
-                    <View style={styles.cardFooterStyle}>
-                      <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-                        <Text style={styles.postUsername}>
-                          {
-                            pictures.filter(
-                              pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-                            )[0].pictureOwnerUsername
-                          }
-                        </Text>
-                      </View>
-                      {
-                        pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-                        )[0].pictureOwnerId === loggedInUser &&
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-                          <TouchableOpacity onPress={() => this.deletePictureAlert(uri)}>
-                            <Ionicons
-                              style={{ color: '#1f267e', fontSize: 30 }}
-                              name="md-more"
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      }
-                      {/* Logged in user liked this picture */}
-                      {
-                        pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-                        )[0].likes.items.length !== 0 &&
-                        pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-                        )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 1 &&
-                        <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
-                          <Ionicons
-                            name='md-heart'
-                            style={{ fontSize: 45, color: '#FB7777' }}
-                          />
-                        </TouchableOpacity>
-                      }
-                      {/* Logged in user did not like this picture */}
-                      {
-                        pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-                        )[0].likes.items.length !== 0 &&
-                        pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-                        )[0].likes.items.filter(obj => obj.likeOwnerId === loggedInUser).length === 0 &&
-                        <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
-                          <Ionicons
-                            name='md-heart'
-                            style={{ fontSize: 45, color: '#69FF' }}
-                          />
-                        </TouchableOpacity>
-                      }
-                      {/* Picture has no likes */}
-                      {
-                        pictures.filter(
-                          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-                        )[0].likes.items.length === 0 &&
-                        <TouchableOpacity onPress={() => this.toggleLikePictures(uri)}>
-                          <Ionicons
-                            name='md-heart'
-                            style={{ fontSize: 45, color: '#69FF' }}
-                          />
-                        </TouchableOpacity>
-                      }
-                    </View>
-                  </View>
-                </Card>
-              ))
-            }
-          </View>
+          {/* Pictures component */}
+          {
+            allPicsURIs.map((uri, index) => (
+              <PictureCard
+                key={index}
+                uri={uri}
+                pictures={pictures}
+                user={loggedInUser}
+                deletePictureAlert={() => this.deletePictureAlert(uri)}
+                toggleLikePicture={() => this.toggleLikePicture(uri)}
+              />
+            ))
+          }
+          {/* Posts component */}
+          {/* {
+            posts.map((post, index) => (
+              <PostCard
+                key={index}
+                post={post}
+                user={loggedInUser}
+                deletePostAlert={() => this.deletePostAlert(post)}
+                toggleLikePost={() => this.toggleLikePost(post)}
+              />
+            ))
+          } */}
         </ScrollView>
       </View>
     )
@@ -517,8 +447,6 @@ const ApolloWrapper = compose(
 
 export default ApolloWrapper
 
-let width = Dimensions.get('window').width
-
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
@@ -529,29 +457,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  cardStyle: {
-    flex: 1,
-    backgroundColor: '#d0d9ed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20
-  },
-  image: {
-    width: width,
-    height: width,
-    marginBottom: 24
-  },
-  cardFooterStyle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingLeft: 10,
-    paddingRight: 10,
-  },
-  postUsername: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1f267e'
   },
 })
