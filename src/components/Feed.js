@@ -103,7 +103,7 @@ class Feed extends React.Component {
       })
   }
 
-  // Query both posts and pictutres 
+  // Query both posts and pictures 
   listPosts = async () => {
     try {
       const postsData = await API.graphql(graphqlOperation(listPosts))
@@ -164,8 +164,16 @@ class Feed extends React.Component {
       }
     )
     if (!result.cancelled) {
-      this.uploadToS3AndRecordInDynamodb(result.uri)
+      await this.uploadToS3AndRecordInDynamodb(result.uri)
     }
+    Alert.alert(
+      'Success',
+      'Your picture was uploaded to the contest.',
+      [
+        { text: 'Done', onPress: () => this.componentDidMount() },
+      ],
+      { cancelable: false }
+    )
   }
 
   uploadToS3AndRecordInDynamodb = async (uri) => {
@@ -242,7 +250,7 @@ class Feed extends React.Component {
   deletePictureAlert = async (uri) => {
     await Alert.alert(
       'Delete Picture',
-      'Are you sure you wanna delete this picture?',
+      'Are you sure you want to delete this picture?',
       [
         { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
         { text: 'OK', onPress: () => this.deletePicture(uri) },
@@ -263,7 +271,7 @@ class Feed extends React.Component {
       if (index > -1) {
         allPicsURIs.splice(index, 1)
       }
-      this.setState({ allPicsURIs: allPicsURIs })
+      await this.setState({ allPicsURIs: allPicsURIs })
     } catch (err) {
       console.log('Error deleting post.', err)
     }
@@ -352,7 +360,7 @@ class Feed extends React.Component {
 
   render() {
     let loggedInUser = this.state.postOwnerId
-    let { pictures, allPicsURIs } = this.state
+    let { posts, pictures, allPicsURIs } = this.state
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerStyle}>
@@ -382,8 +390,8 @@ class Feed extends React.Component {
         >
           <View style={{ flex: 1, alignItems: 'center' }}>
             {/* Posts component */}
-            {/* {
-              this.state.posts.map((post, index) => (
+            {
+              posts.map((post, index) => (
                 <PostCard
                   key={index}
                   post={post}
@@ -392,24 +400,12 @@ class Feed extends React.Component {
                   toggleLikePost={() => this.toggleLikePost(post)}
                 />
               ))
-            } */}
+            }
             {/* Pictures component */}
             {
               allPicsURIs.map((uri, index) => (
                 <Card key={index} style={styles.cardStyle}>
                   <View style={styles.cardHeaderStyle}>
-                    {/* Not a working code. Here to add delete image alert. */}
-                    {/* {
-                      post.postOwnerId === user &&
-                      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-                        <TouchableOpacity onPress={deletePostAlert}>
-                          <Ionicons
-                            style={{ color: '#1f267e', padding: 5, fontSize: 30 }}
-                            name="md-more"
-                          />
-                        </TouchableOpacity>
-                      </View>
-                    } */}
                     <Image style={styles.image} source={{ uri: uri }} />
                     <View style={styles.cardFooterStyle}>
                       <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start' }}>
