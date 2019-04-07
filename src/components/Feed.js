@@ -21,7 +21,7 @@ import Amplify from '@aws-amplify/core'
 import Storage from '@aws-amplify/storage'
 
 // Third party libs
-import { RNS3 } from 'react-native-aws3'; // for sending pics to S3
+import { RNS3 } from 'react-native-aws3' // for sending pics to S3 instead of Storage.put()
 import { ImagePicker, Permissions } from 'expo'
 import { v4 as uuid } from 'uuid'
 
@@ -214,38 +214,12 @@ class Feed extends React.Component {
       })
   }
 
-  deletePicture = async (uri) => {
-    const key = await uri.substring(uri.indexOf('public/') + 7)
-    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
-    const pictureId = await pictureObject[0].id
-    try {
-      // await API.graphql(graphqlOperation(DeletePicture, { id: pictureId }))
-      await this.props.onRemovePicture({ id: pictureId })
-      await this.removeImageFromS3(key)
-      // await this.componentDidMount()
-    } catch (err) {
-      console.log('Error deleting post.', err)
-    }
-  }
-
-  removeImageFromS3 = async (key) => {
-    await Storage.remove(key)
-      .then(result => console.log('Deleted', result))
-      .catch(err => console.log(err))
-  }
-
-  // Give Expo access to device library
-  askPermissionsAsync = async () => {
-    await Permissions.askAsync(Permissions.CAMERA_ROLL)
-  }
-
   allPicsURIs = () => {
 		/* 
 		Perform a get call with Storage API to retrieve the URI of each picture.
 		We then store all URIs in the state to be called in the render method.
 		*/
     let access = { level: 'public' }
-    // let allURIs = []
     let key
     this.state.pictures.map((picture, index) => {
       key = picture.file.key
@@ -253,7 +227,6 @@ class Feed extends React.Component {
         .then((response) => {
           // Extract uri from response
           let uri = response.substring(0, response.indexOf('?'))
-          // allURIs.push(uri)
           if (this.state.allPicsURIs.includes(uri)) {
             return
           } else {
@@ -264,7 +237,35 @@ class Feed extends React.Component {
         })
         .catch(err => console.log(err))
     })
-    // console.log(allURIs)
+  }
+
+  deletePicture = async (uri) => {
+    const { allPicsURIs } = this.state
+    const key = await uri.substring(uri.indexOf('public/') + 7)
+    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
+    const pictureId = await pictureObject[0].id
+    try {
+      await this.props.onRemovePicture({ id: pictureId })
+      await this.removeImageFromS3(key)
+      const index = await allPicsURIs.indexOf(uri)
+      if (index > -1) {
+        allPicsURIs.splice(index, 1)
+      }
+      this.setState({ allPicsURIs: allPicsURIs })
+    } catch (err) {
+      console.log('Error deleting post.', err)
+    }
+  }
+
+  removeImageFromS3 = async (key) => {
+    await Storage.remove(key)
+      .then(result => console.log('Picture deleted', result))
+      .catch(err => console.log(err))
+  }
+
+  // Give Expo access to device library
+  askPermissionsAsync = async () => {
+    await Permissions.askAsync(Permissions.CAMERA_ROLL)
   }
 
   toggleLikePost = async (post) => {
