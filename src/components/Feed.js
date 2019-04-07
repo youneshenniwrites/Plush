@@ -239,6 +239,18 @@ class Feed extends React.Component {
     })
   }
 
+  deletePictureAlert = async (uri) => {
+    await Alert.alert(
+      'Delete Picture',
+      'Are you sure you wanna delete this picture?',
+      [
+        { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
+        { text: 'OK', onPress: () => this.deletePicture(uri) },
+      ],
+      { cancelable: false }
+    )
+  }
+
   deletePicture = async (uri) => {
     const { allPicsURIs } = this.state
     const key = await uri.substring(uri.indexOf('public/') + 7)
@@ -414,7 +426,7 @@ class Feed extends React.Component {
                           pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
                         )[0].pictureOwnerId === loggedInUser &&
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-                          <TouchableOpacity onPress={() => this.deletePicture(uri)}>
+                          <TouchableOpacity onPress={() => this.deletePictureAlert(uri)}>
                             <Ionicons
                               style={{ color: '#1f267e', fontSize: 30 }}
                               name="md-more"
