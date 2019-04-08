@@ -18,6 +18,13 @@ const listPictures = `
             likeOwnerUsername
           }
         }
+        flags {
+          items {
+            id
+            flagOwnerId
+            flagOwnerUsername
+          }
+        }
       }
     }
   }

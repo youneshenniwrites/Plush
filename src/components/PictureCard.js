@@ -14,19 +14,40 @@ import LikePictureButton from './LikePictureButton'
 
 const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } = props) => (
   <Card style={styles.cardStyle}>
-    <Image style={styles.image} source={{ uri: uri }} />
+    {/* Logged in user flagged this picture */}
+    {
+      pictures.filter(
+        pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+      )[0].flags.items.length !== 0 &&
+      pictures.filter(
+        pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+      )[0].flags.items.filter(obj => obj.flagOwnerId === user).length === 1 &&
+      <Text style={[styles.postUsername, { padding: 10 }]}>Content removed.</Text>
+    }
+    {/* Logged in user did not flag this picture */}
+    {
+      pictures.filter(
+        pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+      )[0].flags.items.length !== 0 &&
+      pictures.filter(
+        pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+      )[0].flags.items.filter(obj => obj.flagOwnerId === user).length === 0 &&
+      <Image style={styles.image} source={{ uri: uri }} />
+    }
+    {/* Picture has no flags */}
+    {
+      pictures.filter(
+        pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+      )[0].flags.items.length === 0 &&
+      <Image style={styles.image} source={{ uri: uri }} />
+    }
     <View style={styles.cardFooterStyle}>
-      {
-        pictures.filter(
-          pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-        )[0].pictureOwnerId === user &&
-        <TouchableOpacity onPress={optionsPicture}>
-          <Ionicons
-            style={{ color: '#1f267e', fontSize: 45, marginLeft: 10 }}
-            name="md-more"
-          />
-        </TouchableOpacity>
-      }
+      <TouchableOpacity onPress={optionsPicture}>
+        <Ionicons
+          style={{ color: '#1f267e', fontSize: 45, marginLeft: 10 }}
+          name="md-more"
+        />
+      </TouchableOpacity>
       {/* Show username of picture owner */}
       <Text style={styles.postUsername}>
         {
@@ -63,7 +84,7 @@ const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } 
         <LikePictureButton color='#69FB' toggleLikePicture={toggleLikePicture} />
       }
     </View>
-  </Card>
+  </Card >
 )
 
 export default PictureCard

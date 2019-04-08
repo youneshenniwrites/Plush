@@ -30,13 +30,14 @@ import ModalPosts from './ModalPosts'
 import config from '../aws-exports'
 import keys from '../keys'
 
-// GraphQL components
+// GraphQL mutations and queries
 import CreatePost from '../graphQL/CreatePost'
 import CreatePicture from '../graphQL/CreatePicture'
 import DeletePicture from '../graphQL/DeletePicture'
 import CreateLikePost from '../graphQL/CreateLikePost'
 import CreateLikePicture from '../graphQL/CreateLikePicture'
 import DeleteLikePost from '../graphQL/DeleteLikePost'
+import CreateFlagPicture from '../graphQL/CreateFlagPicture'
 import DeletePost from '../graphQL/DeletePost'
 import listPosts from '../graphQL/listPosts'
 import listPictures from '../graphQL/listPictures'
@@ -66,8 +67,10 @@ class Feed extends React.Component {
           {
             postOwnerUsername: user.username,
             likeOwnerUsername: user.username,
+            flagOwnerUsername: user.username,
             postOwnerId: user.attributes.sub,
             likeOwnerId: user.attributes.sub,
+            flagOwnerId: user.attributes.sub,
           }
         )
       })
@@ -250,11 +253,23 @@ class Feed extends React.Component {
       (buttonIndex) => {
         // Flag inappropriate content
         if (buttonIndex === 1) {
-          console.log('Flagged')
-          // Do something here!
+          Alert.alert(
+            'Report picture',
+            'Are you sure you want to flag this picture as inappropriate?',
+            [
+              { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
+              { text: 'OK', onPress: () => this.createFlagPicture(uri) },
+            ],
+            { cancelable: false }
+          )
         }
-        if (buttonIndex === 2) {
-          // Delete a picture
+        // Delete picture option only when user is the picture owner
+        if (
+          buttonIndex === 2 &&
+          this.state.pictures.filter(
+            pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+          )[0].pictureOwnerId === this.state.postOwnerId
+        ) {
           Alert.alert(
             'Remove picture',
             'Are you sure you want to delete this picture?',
@@ -264,12 +279,30 @@ class Feed extends React.Component {
             ],
             { cancelable: false }
           )
+        } else if (buttonIndex === 2) {
+          Alert.alert('You do not have permission')
         }
       },
     )
   }
 
-  // Method to blur or hide the flagged content.
+  // Method to blur or hide the flagged content
+  createFlagPicture = async (uri) => {
+    const key = await uri.substring(uri.indexOf('public/') + 7)
+    const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
+    const pictureId = await pictureObject[0].id
+    const flag = {
+      id: pictureId,
+      flagOwnerId: this.state.flagOwnerId,
+      flagOwnerUsername: this.state.flagOwnerUsername,
+    }
+    try {
+      await API.graphql(graphqlOperation(CreateFlagPicture, flag))
+      await this.componentDidMount()
+    } catch (err) {
+      console.log('Error creating like.', err)
+    }
+  }
 
   deletePicture = async (uri) => {
     const { allPicsURIs } = this.state
@@ -467,7 +500,7 @@ export default ApolloWrapper
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
   headerStyle: {
     padding: 8,

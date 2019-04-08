@@ -39,7 +39,7 @@ const client = new AWSAppSyncClient({
 class App extends React.Component {
   render() {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: '#edf1f7' }}>
         <Feed
           options={{
             bucket: S3_BUCKET_NAME,
@@ -52,7 +52,7 @@ class App extends React.Component {
 }
 
 // Wrap the App with Amplify HOC
-const AppWithAuth = withAuthenticator(App, true)
+const AppWithAuth = withAuthenticator(App, true) // false
 
 export default () => (
   <ApolloProvider client={client}>
