@@ -1,12 +1,14 @@
 import React from 'react'
 import {
   View,
+  Text,
   Alert,
   Keyboard,
   StyleSheet,
   ScrollView,
   RefreshControl,
-  ActionSheetIOS
+  ActionSheetIOS,
+  Platform,
 } from 'react-native'
 
 // Amplify
@@ -44,12 +46,14 @@ import listPictures from '../graphQL/listPictures'
 
 // Apollo components
 import { graphql, compose } from 'react-apollo'
+import OptionsAndroid from './OptionsAndroid'
 
 Amplify.configure(config)
 
 class Feed extends React.Component {
   state = {
     modalVisible: false,
+    optionsVisible: false,
     posts: [],
     pictures: [],
     allPicsURIs: [],
@@ -86,6 +90,15 @@ class Feed extends React.Component {
 
   hideModal = () => {
     this.setState({ modalVisible: false, postContent: '' })
+  }
+
+  // Modal options pictures
+  showOptions = () => {
+    this.setState({ optionsVisible: true })
+  }
+
+  hideOptions = () => {
+    this.setState({ optionsVisible: false })
   }
 
   onChangeText = (key, val) => {
@@ -244,49 +257,59 @@ class Feed extends React.Component {
   2 - Delete your own pictures.
   */
   optionsPicture = (uri) => {
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: ['Cancel', 'Report', 'Remove'],
-        destructiveButtonIndex: 1,
-        cancelButtonIndex: 0,
-      },
-      (buttonIndex) => {
-        // Flag inappropriate content
-        if (buttonIndex === 1) {
-          Alert.alert(
-            'Report picture',
-            'Are you sure you want to flag this picture as inappropriate?',
-            [
-              { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
-              { text: 'OK', onPress: () => this.createFlagPicture(uri) },
-            ],
-            { cancelable: false }
-          )
-        }
-        // Delete picture option only when user is the picture owner
-        if (
-          buttonIndex === 2 &&
-          this.state.pictures.filter(
-            pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-          )[0].pictureOwnerId === this.state.postOwnerId
-        ) {
-          Alert.alert(
-            'Remove picture',
-            'Are you sure you want to delete this picture?',
-            [
-              { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
-              { text: 'OK', onPress: () => this.deletePicture(uri) },
-            ],
-            { cancelable: false }
-          )
-        } else if (buttonIndex === 2) {
-          Alert.alert('You do not have permission')
-        }
-      },
+    // iOS: Use the ActionSheetIOS component
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Report', 'Remove'],
+          destructiveButtonIndex: 1,
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          // Flag inappropriate content
+          if (buttonIndex === 1) {
+            this.createFlagPictureAlert(uri)
+          }
+          // Delete picture option only when user is the picture owner
+          if (
+            buttonIndex === 2 &&
+            this.state.pictures.filter(
+              pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+            )[0].pictureOwnerId === this.state.postOwnerId
+          ) {
+            Alert.alert(
+              'Remove picture',
+              'Are you sure you want to delete this picture?',
+              [
+                { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
+                { text: 'OK', onPress: () => this.deletePicture(uri) },
+              ],
+              { cancelable: false }
+            )
+          } else if (buttonIndex === 2) {
+            Alert.alert('You do not have permission')
+          }
+        },
+      )
+    } else {
+      // Android: open custom Modal for options
+      this.showOptions()
+    }
+  }
+
+  // Two methods to hide inappropriate content
+  createFlagPictureAlert = (uri) => {
+    Alert.alert(
+      'Report picture',
+      'Are you sure you want to flag this picture as inappropriate?',
+      [
+        { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
+        { text: 'OK', onPress: () => this.createFlagPicture(uri) },
+      ],
+      { cancelable: false }
     )
   }
 
-  // Method to blur or hide the flagged content
   createFlagPicture = async (uri) => {
     const key = await uri.substring(uri.indexOf('public/') + 7)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
@@ -302,6 +325,19 @@ class Feed extends React.Component {
     } catch (err) {
       console.log('Error creating like.', err)
     }
+  }
+
+  // Three methods to let users delete their ictures 
+  deletePictureAlert = (uri) => {
+    Alert.alert(
+      'Remove picture',
+      'Are you sure you want to delete this picture?',
+      [
+        { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
+        { text: 'OK', onPress: () => this.deletePicture(uri) },
+      ],
+      { cancelable: false }
+    )
   }
 
   deletePicture = async (uri) => {
@@ -333,6 +369,7 @@ class Feed extends React.Component {
     await Permissions.askAsync(Permissions.CAMERA_ROLL)
   }
 
+  // Two methods to create and delete likes for posts
   toggleLikePost = async (post) => {
     const loggedInUser = await this.state.postOwnerId
     const likeUserObject = await post.likes.items.filter(
@@ -360,6 +397,7 @@ class Feed extends React.Component {
     }
   }
 
+  // Two methods to create/delete likes for pictures
   toggleLikePicture = async (uri) => {
     const key = await uri.substring(uri.indexOf('public/') + 7)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
@@ -374,7 +412,6 @@ class Feed extends React.Component {
     await this.createLikePicture(uri)
   }
 
-  // Create like method for pictures
   createLikePicture = async (uri) => {
     const key = await uri.substring(uri.indexOf('public/') + 7)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
@@ -392,7 +429,7 @@ class Feed extends React.Component {
     }
   }
 
-  // Works for both posts and pictures
+  // Delete likes. Works for both posts and pictures
   deleteLikePost = async (likeUserObject) => {
     const likeId = await likeUserObject[0]['id']
     try {
@@ -443,6 +480,19 @@ class Feed extends React.Component {
                 user={loggedInUser}
                 optionsPicture={() => this.optionsPicture(uri)}
                 toggleLikePicture={() => this.toggleLikePicture(uri)}
+              />
+            ))
+          }
+          {/* Renders only for Android */}
+          {
+            Platform.OS === 'android' &&
+            allPicsURIs.map((uri, index) => (
+              <OptionsAndroid
+                key={index}
+                options={this.state.optionsVisible}
+                flag={() => this.createFlagPictureAlert(uri)}
+                remove={() => this.deletePictureAlert(uri)}
+                close={this.hideOptions}
               />
             ))
           }

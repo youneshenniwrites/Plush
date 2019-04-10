@@ -21,7 +21,7 @@ const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } 
       )[0].flags.items.length !== 0 &&
       pictures.filter(
         pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
-      )[0].flags.items.filter(obj => obj.flagOwnerId === user).length === 1 &&
+      )[0].flags.items.filter(obj => obj.flagOwnerId === user).length >= 1 &&
       <Text style={[styles.postUsername, { padding: 10 }]}>Content removed.</Text>
     }
     {/* Logged in user did not flag this picture */}
