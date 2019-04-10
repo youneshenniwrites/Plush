@@ -1,7 +1,6 @@
 import React from 'react'
 import {
   View,
-  Text,
   Alert,
   Keyboard,
   StyleSheet,
@@ -18,7 +17,7 @@ import Amplify from '@aws-amplify/core'
 import Storage from '@aws-amplify/storage'
 
 // Third party libs
-import { RNS3 } from 'react-native-aws3' // for sending pics to S3 instead of Storage.put()
+import { RNS3 } from 'react-native-aws3' // For sending pics to S3 instead of Storage.put()
 import { ImagePicker, Permissions } from 'expo'
 import { v4 as uuid } from 'uuid'
 
@@ -27,6 +26,7 @@ import Header from './Header';
 import PostCard from './PostCard'
 import PictureCard from './PictureCard'
 import ModalPosts from './ModalPosts'
+import OptionsAndroid from './OptionsAndroid'
 
 // Config imports
 import config from '../aws-exports'
@@ -46,7 +46,6 @@ import listPictures from '../graphQL/listPictures'
 
 // Apollo components
 import { graphql, compose } from 'react-apollo'
-import OptionsAndroid from './OptionsAndroid'
 
 Amplify.configure(config)
 
@@ -83,7 +82,7 @@ class Feed extends React.Component {
     await this.allPicsURIs()
   }
 
-  // Modal posts methods
+  // Two methods for Modal posts.
   showModal = () => {
     this.setState({ modalVisible: true })
   }
@@ -92,7 +91,7 @@ class Feed extends React.Component {
     this.setState({ modalVisible: false, postContent: '' })
   }
 
-  // Modal options pictures
+  // Two methods for Modal options. Used only in Android.
   showOptions = () => {
     this.setState({ optionsVisible: true })
   }
@@ -105,6 +104,7 @@ class Feed extends React.Component {
     this.setState({ [key]: val })
   }
 
+  // Pull to refresh the feed
   _onRefresh = () => {
     this.setState({ refreshing: true })
     this.componentDidMount()
@@ -165,7 +165,10 @@ class Feed extends React.Component {
     }
   }
 
-  // Get pictures from device then upload them to AWS S3 and store their records in DynamobDB
+  /* 
+  Two methods to get pictures from the user's device then upload them to AWS-S3 
+  and store their records in AWS-DynamobDB
+  */
   createPicture = async () => {
     await this.askPermissionsAsync()
     const result = await ImagePicker.launchImageLibraryAsync(
@@ -270,22 +273,14 @@ class Feed extends React.Component {
           if (buttonIndex === 1) {
             this.createFlagPictureAlert(uri)
           }
-          // Delete picture option only when user is the picture owner
+          // Allow owners to delete their pictures
           if (
             buttonIndex === 2 &&
             this.state.pictures.filter(
               pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
             )[0].pictureOwnerId === this.state.postOwnerId
           ) {
-            Alert.alert(
-              'Remove picture',
-              'Are you sure you want to delete this picture?',
-              [
-                { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
-                { text: 'OK', onPress: () => this.deletePicture(uri) },
-              ],
-              { cancelable: false }
-            )
+            this.deletePictureAlert(uri)
           } else if (buttonIndex === 2) {
             Alert.alert('You do not have permission')
           }
@@ -327,7 +322,7 @@ class Feed extends React.Component {
     }
   }
 
-  // Three methods to let users delete their ictures 
+  // Three methods below to let users delete their pictures 
   deletePictureAlert = (uri) => {
     Alert.alert(
       'Remove picture',
@@ -369,7 +364,7 @@ class Feed extends React.Component {
     await Permissions.askAsync(Permissions.CAMERA_ROLL)
   }
 
-  // Two methods to create and delete likes for posts
+  // Two methods to create/delete likes for posts
   toggleLikePost = async (post) => {
     const loggedInUser = await this.state.postOwnerId
     const likeUserObject = await post.likes.items.filter(
@@ -514,6 +509,7 @@ class Feed extends React.Component {
   }
 }
 
+// Decorate our Feed component with the Apollo mutations.
 const ApolloWrapper = compose(
   graphql(CreatePicture, {
     props: (props) => ({
