@@ -212,7 +212,7 @@ class Feed extends React.Component {
         if (response.status !== 201) {
           throw new Error("Failed to upload image to S3")
         } else {
-          console.log('Upload successful.')
+          // console.log('Upload successful.')
           const key = `${picture.name}`
           const file = { bucket, region, key }
           // Apollo mutation to create a picture
@@ -336,18 +336,27 @@ class Feed extends React.Component {
   }
 
   deletePicture = async (uri) => {
-    const { allPicsURIs } = this.state
+    const pictures = this.state.allPicsURIs
     const key = await uri.substring(uri.indexOf('public/') + 7)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
     const pictureId = await pictureObject[0].id
     try {
       await this.props.onRemovePicture({ id: pictureId })
       await this.removeImageFromS3(key)
-      const index = await allPicsURIs.indexOf(uri)
+      const index = await pictures.indexOf(uri)
       if (index > -1) {
-        allPicsURIs.splice(index, 1)
+        pictures.splice(index, 1)
       }
-      await this.setState({ allPicsURIs: allPicsURIs })
+      this.setState({ allPicsURIs: pictures })
+      await this.listPosts()
+      Alert.alert(
+        'Success',
+        'Your picture was removed from the contest.',
+        [
+          { text: 'Done', onPress: () => this.componentDidMount() },
+        ],
+        { cancelable: false }
+      )
     } catch (err) {
       console.log('Error deleting post.', err)
     }
