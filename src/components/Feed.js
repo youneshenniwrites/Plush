@@ -55,7 +55,6 @@ class Feed extends React.Component {
     optionsVisible: false,
     posts: [],
     pictures: [],
-    allPicsURIs: [],
     postOwnerId: '',
     likeOwnerId: '',
     postContent: '',
@@ -79,7 +78,6 @@ class Feed extends React.Component {
       })
       .catch(err => console.log(err))
     await this.listPosts()
-    await this.allPicsURIs()
     // console.log(this.state.pictures)
   }
 
@@ -232,14 +230,6 @@ class Feed extends React.Component {
       })
   }
 
-  allPicsURIs = () => {
-    /* 
-    Load all uris of images in the state.
-    */
-    let uris = this.state.pictures.map(picture => picture.file.uri)
-    this.setState({ allPicsURIs: uris })
-  }
-
   /* 
   This method allows you to:
   1 - Report inappropriate content.
@@ -328,9 +318,6 @@ class Feed extends React.Component {
     try {
       await this.props.onRemovePicture({ id: pictureId })
       await this.removeImageFromS3(key)
-      this.setState(prevState => ({
-        allPicsURIs: prevState.allPicsURIs.filter(item => item !== uri)
-      }))
       await this.listPosts()
       Alert.alert(
         'Success',
@@ -430,7 +417,7 @@ class Feed extends React.Component {
   render() {
     let loggedInUser = this.state.postOwnerId
     let uris = this.state.pictures.map(picture => picture.file.uri)
-    let { posts, pictures, allPicsURIs, postContent, modalVisible, refreshing, optionsVisible } = this.state
+    let { posts, pictures, postContent, modalVisible, refreshing, optionsVisible } = this.state
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerStyle}>
@@ -474,7 +461,7 @@ class Feed extends React.Component {
           {/* Renders only for Android */}
           {
             Platform.OS === 'android' &&
-            allPicsURIs.map((uri, index) => (
+            uris.map((uri, index) => (
               <OptionsAndroid
                 key={index}
                 options={optionsVisible}

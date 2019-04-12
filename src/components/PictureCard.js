@@ -16,29 +16,19 @@ const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } 
   <Card style={styles.cardStyle}>
     {/* Logged in user flagged this picture */}
     {
-      pictures.filter(
-        pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-      )[0].flags.items.length !== 0 &&
-      pictures.filter(
-        pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-      )[0].flags.items.filter(obj => obj.flagOwnerId === user).length >= 1 &&
+      pictures.filter(pic => pic.file.uri === uri)[0].flags.items.length !== 0 &&
+      pictures.filter(pic => pic.file.uri === uri)[0].flags.items.filter(obj => obj.flagOwnerId === user).length >= 1 &&
       <Text style={[styles.postUsername, { padding: 10 }]}>Content removed.</Text>
     }
     {/* Logged in user did not flag this picture */}
     {
-      pictures.filter(
-        pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-      )[0].flags.items.length !== 0 &&
-      pictures.filter(
-        pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-      )[0].flags.items.filter(obj => obj.flagOwnerId === user).length === 0 &&
+      pictures.filter(pic => pic.file.uri === uri)[0].flags.items.length !== 0 &&
+      pictures.filter(pic => pic.file.uri === uri)[0].flags.items.filter(obj => obj.flagOwnerId === user).length === 0 &&
       <Image style={styles.image} source={{ uri: uri }} />
     }
     {/* Picture has no flags */}
     {
-      pictures.filter(
-        pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-      )[0].flags.items.length === 0 &&
+      pictures.filter(pic => pic.file.uri === uri)[0].flags.items.length === 0 &&
       <Image style={styles.image} source={{ uri: uri }} />
     }
     <View style={styles.cardFooterStyle}>
@@ -51,37 +41,25 @@ const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } 
       {/* Show username of picture owner */}
       <Text style={styles.postUsername}>
         {
-          pictures.filter(
-            pic => pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-          )[0].pictureOwnerUsername
+          pictures.filter(pic => pic.file.uri === uri)[0].pictureOwnerUsername
         }
       </Text>
       {console.log('Pics: ', pictures)}
       {/* Logged in user liked this picture */}
       {
-        pictures.filter(
-          pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-        )[0].likes.items.length !== 0 &&
-        pictures.filter(
-          pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-        )[0].likes.items.filter(obj => obj.likeOwnerId === user).length === 1 &&
+        pictures.filter(pic => pic.file.uri === uri)[0].likes.items.length !== 0 &&
+        pictures.filter(pic => pic.file.uri === uri)[0].likes.items.filter(obj => obj.likeOwnerId === user).length === 1 &&
         <LikePictureButton color='#FB7777' toggleLikePicture={toggleLikePicture} />
       }
       {/* Logged in user did not like this picture */}
       {
-        pictures.filter(
-          pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-        )[0].likes.items.length !== 0 &&
-        pictures.filter(
-          pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-        )[0].likes.items.filter(obj => obj.likeOwnerId === user).length === 0 &&
+        pictures.filter(pic => pic.file.uri === uri)[0].likes.items.length !== 0 &&
+        pictures.filter(pic => pic.file.uri === uri)[0].likes.items.filter(obj => obj.likeOwnerId === user).length === 0 &&
         <LikePictureButton color='#69FB' toggleLikePicture={toggleLikePicture} />
       }
       {/* Picture has no likes */}
       {
-        pictures.filter(
-          pic => pic.file.key !== undefined && pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-        )[0].likes.items.length === 0 &&
+        pictures.filter(pic => pic.file.uri === uri)[0].likes.items.length === 0 &&
         <LikePictureButton color='#69FB' toggleLikePicture={toggleLikePicture} />
       }
     </View>
