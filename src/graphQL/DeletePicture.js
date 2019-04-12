@@ -5,6 +5,6 @@ mutation ($input: DeletePictureInput!) {
   deletePicture(input: $input) {
     id
   }
-}`;
+}`
 
 export default DeletePicture

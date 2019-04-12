@@ -11,6 +11,7 @@ mutation ($input: CreatePictureInput!) {
       region
       bucket
       key
+      uri
     }
   }
 }`

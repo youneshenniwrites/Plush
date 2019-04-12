@@ -10,6 +10,7 @@ const listPictures = `
           bucket
           region
           key
+          uri
         }
         likes {
           items {

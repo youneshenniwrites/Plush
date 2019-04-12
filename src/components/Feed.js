@@ -80,6 +80,7 @@ class Feed extends React.Component {
       .catch(err => console.log(err))
     await this.listPosts()
     await this.allPicsURIs()
+    // console.log(this.state.pictures)
   }
 
   // Two methods for Modal posts.
@@ -116,11 +117,12 @@ class Feed extends React.Component {
   // Query both posts and pictures 
   listPosts = async () => {
     try {
-      const postsData = await API.graphql(graphqlOperation(listPosts))
       const picturesData = await API.graphql(graphqlOperation(listPictures))
-      const listOfAllposts = await postsData.data.listPosts.items
       const listOfAllpictures = await picturesData.data.listPictures.items
-      this.setState({ posts: listOfAllposts, pictures: listOfAllpictures })
+      this.setState({ pictures: listOfAllpictures })
+      // const postsData = await API.graphql(graphqlOperation(listPosts))
+      // const listOfAllposts = await postsData.data.listPosts.items
+      // this.setState({ posts: listOfAllposts, pictures: listOfAllpictures })
     }
     catch (err) {
       console.log('error: ', err)
@@ -143,6 +145,7 @@ class Feed extends React.Component {
     }
   }
 
+  // Two methods to delete posts
   deletePostAlert = async (post) => {
     await Alert.alert(
       'Delete Post',
@@ -212,9 +215,9 @@ class Feed extends React.Component {
         if (response.status !== 201) {
           throw new Error("Failed to upload image to S3")
         } else {
-          // console.log('Upload successful.')
+          const uri = response.headers.Location
           const key = `${picture.name}`
-          const file = { bucket, region, key }
+          const file = { bucket, region, key, uri }
           // Apollo mutation to create a picture
           this.props.onAddPicture(
             {
@@ -230,28 +233,11 @@ class Feed extends React.Component {
   }
 
   allPicsURIs = () => {
-		/* 
-		Perform a get call with Storage API to retrieve the URI of each picture.
-		We then store all URIs in the state to be called in the render method.
-		*/
-    let access = { level: 'public' }
-    let key
-    this.state.pictures.map((picture, index) => {
-      key = picture.file.key
-      Storage.get(key, access)
-        .then((response) => {
-          // Extract uri from response
-          let uri = response.substring(0, response.indexOf('?'))
-          if (this.state.allPicsURIs.includes(uri)) {
-            return
-          } else {
-            this.setState(prevState => ({
-              allPicsURIs: [...prevState.allPicsURIs, uri]
-            }))
-          }
-        })
-        .catch(err => console.log(err))
-    })
+    /* 
+    Load all uris of images in the state.
+    */
+    let uris = this.state.pictures.map(picture => picture.file.uri)
+    this.setState({ allPicsURIs: uris })
   }
 
   /* 
@@ -277,7 +263,7 @@ class Feed extends React.Component {
           if (
             buttonIndex === 2 &&
             this.state.pictures.filter(
-              pic => pic.file.key === uri.substring(uri.indexOf('public/') + 7)
+              pic => pic.file.key === uri.substring(uri.indexOf('2F') + 2)
             )[0].pictureOwnerId === this.state.postOwnerId
           ) {
             this.deletePictureAlert(uri)
@@ -306,7 +292,7 @@ class Feed extends React.Component {
   }
 
   createFlagPicture = async (uri) => {
-    const key = await uri.substring(uri.indexOf('public/') + 7)
+    const key = await uri.substring(uri.indexOf('2F') + 2)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
     const pictureId = await pictureObject[0].id
     const flag = {
@@ -336,18 +322,15 @@ class Feed extends React.Component {
   }
 
   deletePicture = async (uri) => {
-    const pictures = this.state.allPicsURIs
-    const key = await uri.substring(uri.indexOf('public/') + 7)
+    const key = await uri.substring(uri.indexOf('2F') + 2)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
     const pictureId = await pictureObject[0].id
     try {
       await this.props.onRemovePicture({ id: pictureId })
       await this.removeImageFromS3(key)
-      const index = await pictures.indexOf(uri)
-      if (index > -1) {
-        pictures.splice(index, 1)
-      }
-      this.setState({ allPicsURIs: pictures })
+      this.setState(prevState => ({
+        allPicsURIs: prevState.allPicsURIs.filter(item => item !== uri)
+      }))
       await this.listPosts()
       Alert.alert(
         'Success',
@@ -403,7 +386,7 @@ class Feed extends React.Component {
 
   // Two methods to create/delete likes for pictures
   toggleLikePicture = async (uri) => {
-    const key = await uri.substring(uri.indexOf('public/') + 7)
+    const key = await uri.substring(uri.indexOf('2F') + 2)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
     const loggedInUser = await this.state.postOwnerId
     const likeUserObject = await pictureObject[0].likes.items.filter(
@@ -417,7 +400,7 @@ class Feed extends React.Component {
   }
 
   createLikePicture = async (uri) => {
-    const key = await uri.substring(uri.indexOf('public/') + 7)
+    const key = await uri.substring(uri.indexOf('2F') + 2)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
     const pictureId = await pictureObject[0].id
     const like = {
@@ -446,7 +429,8 @@ class Feed extends React.Component {
 
   render() {
     let loggedInUser = this.state.postOwnerId
-    let { posts, pictures, allPicsURIs } = this.state
+    let uris = this.state.pictures.map(picture => picture.file.uri)
+    let { posts, pictures, allPicsURIs, postContent, modalVisible, refreshing, optionsVisible } = this.state
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerStyle}>
@@ -458,8 +442,8 @@ class Feed extends React.Component {
           />
           {/* Open Modal component to write a post */}
           <ModalPosts
-            modalVisible={this.state.modalVisible}
-            postContent={this.state.postContent}
+            modalVisible={modalVisible}
+            postContent={postContent}
             hideModal={this.hideModal}
             createPost={this.createPost}
             onChangeText={val => this.onChangeText('postContent', val)}
@@ -469,14 +453,14 @@ class Feed extends React.Component {
           contentContainerStyle={styles.container}
           refreshControl={
             <RefreshControl
-              refreshing={this.state.refreshing}
+              refreshing={refreshing}
               onRefresh={this._onRefresh}
             />
           }
         >
           {/* Pictures component */}
           {
-            allPicsURIs.map((uri, index) => (
+            uris.map((uri, index) => (
               <PictureCard
                 key={index}
                 uri={uri}
@@ -493,7 +477,7 @@ class Feed extends React.Component {
             allPicsURIs.map((uri, index) => (
               <OptionsAndroid
                 key={index}
-                options={this.state.optionsVisible}
+                options={optionsVisible}
                 flag={() => this.createFlagPictureAlert(uri)}
                 remove={() => this.deletePictureAlert(uri)}
                 close={this.hideOptions}
@@ -501,7 +485,7 @@ class Feed extends React.Component {
             ))
           }
           {/* Posts component */}
-          {/* {
+          {
             posts.map((post, index) => (
               <PostCard
                 key={index}
@@ -511,7 +495,7 @@ class Feed extends React.Component {
                 toggleLikePost={() => this.toggleLikePost(post)}
               />
             ))
-          } */}
+          }
         </ScrollView>
       </View>
     )
