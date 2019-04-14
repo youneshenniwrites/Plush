@@ -1,4 +1,4 @@
-const DeleteLikePost = `
+const DeleteLikePicture = `
   mutation($id:ID!) {
     deleteLike(input:{
       id: $id,
@@ -8,4 +8,4 @@ const DeleteLikePost = `
   }
 `
 
-export default DeleteLikePost
+export default DeleteLikePicture

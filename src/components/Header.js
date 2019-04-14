@@ -9,9 +9,6 @@ import { Ionicons } from '@expo/vector-icons'
 
 const Header = (props) => (
   <View style={styles.headerStyle}>
-    <TouchableOpacity onPress={props.showModal}>
-      <Ionicons style={styles.iconStyle} name="md-create" />
-    </TouchableOpacity>
     <TouchableOpacity onPress={props.accessDevice}>
       <Ionicons style={styles.iconStyle} name="ios-camera" />
     </TouchableOpacity>

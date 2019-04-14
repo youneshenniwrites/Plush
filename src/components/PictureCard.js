@@ -18,7 +18,7 @@ const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } 
     {
       pictures.filter(pic => pic.file.uri === uri)[0].flags.items.length !== 0 &&
       pictures.filter(pic => pic.file.uri === uri)[0].flags.items.filter(obj => obj.flagOwnerId === user).length >= 1 &&
-      <Text style={[styles.postUsername, { padding: 10 }]}>Content removed.</Text>
+      <Text style={[styles.pictureUsername, { padding: 10 }]}>Content removed.</Text>
     }
     {/* Logged in user did not flag this picture */}
     {
@@ -39,12 +39,11 @@ const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } 
         />
       </TouchableOpacity>
       {/* Show username of picture owner */}
-      <Text style={styles.postUsername}>
+      <Text style={styles.pictureUsername}>
         {
           pictures.filter(pic => pic.file.uri === uri)[0].pictureOwnerUsername
         }
       </Text>
-      {console.log('Pics: ', pictures)}
       {/* Logged in user liked this picture */}
       {
         pictures.filter(pic => pic.file.uri === uri)[0].likes.items.length !== 0 &&
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     paddingRight: 10,
   },
-  postUsername: {
+  pictureUsername: {
     fontSize: 15,
     fontWeight: 'bold',
     marginLeft: 20,

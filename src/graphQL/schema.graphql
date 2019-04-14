@@ -1,12 +1,3 @@
-type Post @model {
-  id: ID!
-  postOwnerId: String!
-  postOwnerUsername: String!
-  postContent: String!
-  likes: [Like] @connection(name: "PostLikes")
-  flags: [Flag] @connection(name: "PostFlags")
-}
-
 type Picture @model {
   id: ID!
   pictureOwnerId: String!
@@ -21,7 +12,6 @@ type Like @model {
   id: ID!
   likeOwnerId: String!
   likeOwnerUsername: String!
-  post: Post @connection(name: "PostLikes")
   picture: Picture @connection(name: "PictureLikes")
 }
 
@@ -29,7 +19,6 @@ type Flag @model {
   id: ID!
   flagOwnerId: String!
   flagOwnerUsername: String!
-  post: Post @connection(name: "PostFlags")
   picture: Picture @connection(name: "PictureFlags")
 }
 

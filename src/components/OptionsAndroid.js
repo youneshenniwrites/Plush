@@ -7,14 +7,14 @@ import {
   StyleSheet
 } from "react-native";
 
-const OptionsAndroid = ({ options, flag, remove, close } = props) => (
+const OptionsAndroid = ({ user, pictures, uri, options, flag, remove, close } = props) => (
   <Modal
     animationType="slide"
     transparent={true}
     onRequestClose={() => !options}
     visible={options}>
     <View style={styles.modalContainer}>
-      <View style={styles.postCardStyle}>
+      <View style={styles.pictureCardStyle}>
         {/* Report inappropriate content */}
         <TouchableOpacity
           onPress={flag}
@@ -24,13 +24,16 @@ const OptionsAndroid = ({ options, flag, remove, close } = props) => (
           </Text>
         </TouchableOpacity>
         {/* Remove picture */}
-        <TouchableOpacity
-          onPress={remove}
-          style={[styles.twinButtonStyle, { backgroundColor: '#f16f69' }]}>
-          <Text style={styles.buttonText}>
-            Remove
-          </Text>
-        </TouchableOpacity>
+        {
+          pictures.filter(pic => pic.file.uri === uri)[0].pictureOwnerId === user &&
+          <TouchableOpacity
+            onPress={remove}
+            style={[styles.twinButtonStyle, { backgroundColor: '#f16f69' }]}>
+            <Text style={styles.buttonText}>
+              Remove
+            </Text>
+          </TouchableOpacity>
+        }
         {/* Close options modal */}
         <TouchableOpacity
           onPress={close}
@@ -62,7 +65,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: "#fff",
   },
-  postCardStyle: {
+  pictureCardStyle: {
     marginTop: 45,
     padding: 20
   },

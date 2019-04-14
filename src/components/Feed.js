@@ -2,7 +2,6 @@ import React from 'react'
 import {
   View,
   Alert,
-  Keyboard,
   StyleSheet,
   ScrollView,
   RefreshControl,
@@ -23,9 +22,7 @@ import { v4 as uuid } from 'uuid'
 
 // Local components
 import Header from './Header';
-import PostCard from './PostCard'
 import PictureCard from './PictureCard'
-import ModalPosts from './ModalPosts'
 import OptionsAndroid from './OptionsAndroid'
 
 // Config imports
@@ -33,16 +30,12 @@ import config from '../aws-exports'
 import keys from '../keys'
 
 // GraphQL mutations and queries
-import CreatePost from '../graphQL/CreatePost'
 import CreatePicture from '../graphQL/CreatePicture'
 import DeletePicture from '../graphQL/DeletePicture'
-import CreateLikePost from '../graphQL/CreateLikePost'
-import CreateLikePicture from '../graphQL/CreateLikePicture'
-import DeleteLikePost from '../graphQL/DeleteLikePost'
-import CreateFlagPicture from '../graphQL/CreateFlagPicture'
-import DeletePost from '../graphQL/DeletePost'
-import listPosts from '../graphQL/listPosts'
 import listPictures from '../graphQL/listPictures'
+import CreateLikePicture from '../graphQL/CreateLikePicture'
+import DeleteLikePicture from '../graphQL/DeleteLikePicture'
+import CreateFlagPicture from '../graphQL/CreateFlagPicture'
 
 // Apollo components
 import { graphql, compose } from 'react-apollo'
@@ -51,14 +44,11 @@ Amplify.configure(config)
 
 class Feed extends React.Component {
   state = {
-    modalVisible: false,
     optionsVisible: false,
-    posts: [],
     pictures: [],
-    postOwnerId: '',
+    pictureOwnerId: '',
     likeOwnerId: '',
-    postContent: '',
-    postOwnerUsername: '',
+    pictureOwnerUsername: '',
     likeOwnerUsername: '',
   }
 
@@ -67,27 +57,17 @@ class Feed extends React.Component {
       .then(user => {
         this.setState(
           {
-            postOwnerUsername: user.username,
+            pictureOwnerUsername: user.username,
             likeOwnerUsername: user.username,
             flagOwnerUsername: user.username,
-            postOwnerId: user.attributes.sub,
+            pictureOwnerId: user.attributes.sub,
             likeOwnerId: user.attributes.sub,
             flagOwnerId: user.attributes.sub,
           }
         )
       })
       .catch(err => console.log(err))
-    await this.listPosts()
-    // console.log(this.state.pictures)
-  }
-
-  // Two methods for Modal posts.
-  showModal = () => {
-    this.setState({ modalVisible: true })
-  }
-
-  hideModal = () => {
-    this.setState({ modalVisible: false, postContent: '' })
+    await this.listPictures()
   }
 
   // Two methods for Modal options. Used only in Android.
@@ -99,10 +79,6 @@ class Feed extends React.Component {
     this.setState({ optionsVisible: false })
   }
 
-  onChangeText = (key, val) => {
-    this.setState({ [key]: val })
-  }
-
   // Pull to refresh the feed
   _onRefresh = () => {
     this.setState({ refreshing: true })
@@ -112,57 +88,15 @@ class Feed extends React.Component {
       })
   }
 
-  // Query both posts and pictures 
-  listPosts = async () => {
+  // Query all pictures 
+  listPictures = async () => {
     try {
       const picturesData = await API.graphql(graphqlOperation(listPictures))
       const listOfAllpictures = await picturesData.data.listPictures.items
       this.setState({ pictures: listOfAllpictures })
-      // const postsData = await API.graphql(graphqlOperation(listPosts))
-      // const listOfAllposts = await postsData.data.listPosts.items
-      // this.setState({ posts: listOfAllposts, pictures: listOfAllpictures })
     }
     catch (err) {
       console.log('error: ', err)
-    }
-  }
-
-  createPost = async () => {
-    const post = this.state
-    if (post.postContent === '') {
-      Alert.alert('Write something!')
-      return
-    }
-    try {
-      await API.graphql(graphqlOperation(CreatePost, post))
-      await this.componentDidMount()
-      Keyboard.dismiss()
-      this.hideModal()
-    } catch (err) {
-      console.log('Error creating post.', err)
-    }
-  }
-
-  // Two methods to delete posts
-  deletePostAlert = async (post) => {
-    await Alert.alert(
-      'Delete Post',
-      'Are you sure you wanna delete this post?',
-      [
-        { text: 'Cancel', onPress: () => { return }, style: 'cancel' },
-        { text: 'OK', onPress: () => this.deletePost(post) },
-      ],
-      { cancelable: false }
-    )
-  }
-
-  deletePost = async (post) => {
-    const postId = await post['id']
-    try {
-      await API.graphql(graphqlOperation(DeletePost, { id: postId }))
-      await this.componentDidMount()
-    } catch (err) {
-      console.log('Error deleting post.', err)
     }
   }
 
@@ -188,6 +122,11 @@ class Feed extends React.Component {
           { cancelable: false }
         ))
     }
+  }
+
+  // Give Expo access to device library
+  askPermissionsAsync = async () => {
+    await Permissions.askAsync(Permissions.CAMERA_ROLL)
   }
 
   uploadToS3AndRecordInDynamodb = async (uri) => {
@@ -216,12 +155,12 @@ class Feed extends React.Component {
           const uri = response.headers.Location
           const key = `${picture.name}`
           const file = { bucket, region, key, uri }
-          // Apollo mutation to create a picture
+          // Apollo mutation to create a picture file
           this.props.onAddPicture(
             {
               id: uuid(),
-              pictureOwnerId: this.state.postOwnerId,
-              pictureOwnerUsername: this.state.postOwnerUsername,
+              pictureOwnerId: this.state.pictureOwnerId,
+              pictureOwnerUsername: this.state.pictureOwnerUsername,
               visibility: visibility,
               file: file
             }
@@ -252,9 +191,7 @@ class Feed extends React.Component {
           // Allow owners to delete their pictures
           if (
             buttonIndex === 2 &&
-            this.state.pictures.filter(
-              pic => pic.file.key === uri.substring(uri.indexOf('2F') + 2)
-            )[0].pictureOwnerId === this.state.postOwnerId
+            this.state.pictures.filter(pic => pic.file.uri === uri)[0].pictureOwnerId === this.state.pictureOwnerId
           ) {
             this.deletePictureAlert(uri)
           } else if (buttonIndex === 2) {
@@ -318,7 +255,7 @@ class Feed extends React.Component {
     try {
       await this.props.onRemovePicture({ id: pictureId })
       await this.removeImageFromS3(key)
-      await this.listPosts()
+      await this.listPictures()
       Alert.alert(
         'Success',
         'Your picture was removed from the contest.',
@@ -328,7 +265,7 @@ class Feed extends React.Component {
         { cancelable: false }
       )
     } catch (err) {
-      console.log('Error deleting post.', err)
+      console.log('Error deleting picture.', err)
     }
   }
 
@@ -338,49 +275,16 @@ class Feed extends React.Component {
       .catch(err => console.log(err))
   }
 
-  // Give Expo access to device library
-  askPermissionsAsync = async () => {
-    await Permissions.askAsync(Permissions.CAMERA_ROLL)
-  }
-
-  // Two methods to create/delete likes for posts
-  toggleLikePost = async (post) => {
-    const loggedInUser = await this.state.postOwnerId
-    const likeUserObject = await post.likes.items.filter(
-      obj => obj.likeOwnerId === loggedInUser
-    )
-    if (likeUserObject.length !== 0) {
-      await this.deleteLikePost(likeUserObject)
-      return
-    }
-    await this.createLikePost(post)
-  }
-
-  createLikePost = async (post) => {
-    const postId = await post['id']
-    const like = {
-      id: postId,
-      likeOwnerId: this.state.likeOwnerId,
-      likeOwnerUsername: this.state.likeOwnerUsername,
-    }
-    try {
-      await API.graphql(graphqlOperation(CreateLikePost, like))
-      await this.componentDidMount()
-    } catch (err) {
-      console.log('Error creating like.', err)
-    }
-  }
-
   // Two methods to create/delete likes for pictures
   toggleLikePicture = async (uri) => {
     const key = await uri.substring(uri.indexOf('2F') + 2)
     const pictureObject = await this.state.pictures.filter(photo => photo.file.key === key)
-    const loggedInUser = await this.state.postOwnerId
+    const loggedInUser = await this.state.pictureOwnerId
     const likeUserObject = await pictureObject[0].likes.items.filter(
       obj => obj.likeOwnerId === loggedInUser
     )
     if (likeUserObject.length !== 0) {
-      await this.deleteLikePost(likeUserObject)
+      await this.deleteLikePicture(likeUserObject)
       return
     }
     await this.createLikePicture(uri)
@@ -403,11 +307,11 @@ class Feed extends React.Component {
     }
   }
 
-  // Delete likes. Works for both posts and pictures
-  deleteLikePost = async (likeUserObject) => {
+  // Delete likes for pictures
+  deleteLikePicture = async (likeUserObject) => {
     const likeId = await likeUserObject[0]['id']
     try {
-      await API.graphql(graphqlOperation(DeleteLikePost, { id: likeId }))
+      await API.graphql(graphqlOperation(DeleteLikePicture, { id: likeId }))
       await this.componentDidMount()
     } catch (err) {
       console.log('Error deleting like.', err)
@@ -415,25 +319,16 @@ class Feed extends React.Component {
   }
 
   render() {
-    let loggedInUser = this.state.postOwnerId
+    let loggedInUser = this.state.pictureOwnerId
     let uris = this.state.pictures.map(picture => picture.file.uri)
-    let { posts, pictures, postContent, modalVisible, refreshing, optionsVisible } = this.state
+    let { pictures, refreshing, optionsVisible } = this.state
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.headerStyle}>
           {/* Header */}
           <Header
-            showModal={this.showModal}
             accessDevice={this.createPicture}
             refresh={this.componentDidMount}
-          />
-          {/* Open Modal component to write a post */}
-          <ModalPosts
-            modalVisible={modalVisible}
-            postContent={postContent}
-            hideModal={this.hideModal}
-            createPost={this.createPost}
-            onChangeText={val => this.onChangeText('postContent', val)}
           />
         </View>
         <ScrollView
@@ -464,22 +359,13 @@ class Feed extends React.Component {
             uris.map((uri, index) => (
               <OptionsAndroid
                 key={index}
+                user={loggedInUser}
+                pictures={pictures}
+                uri={uri}
                 options={optionsVisible}
                 flag={() => this.createFlagPictureAlert(uri)}
                 remove={() => this.deletePictureAlert(uri)}
                 close={this.hideOptions}
-              />
-            ))
-          }
-          {/* Posts component */}
-          {
-            posts.map((post, index) => (
-              <PostCard
-                key={index}
-                post={post}
-                user={loggedInUser}
-                deletePostAlert={() => this.deletePostAlert(post)}
-                toggleLikePost={() => this.toggleLikePost(post)}
               />
             ))
           }
