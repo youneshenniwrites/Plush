@@ -2,7 +2,7 @@
 
 ![Plush](https://user-images.githubusercontent.com/26605247/56092404-a2808780-5eb3-11e9-82de-60f9a651ceee.png)
 
-Plush is a full-stack mobile application for pictures sharing. It uses Expo and React Native for the front end, AWS Amplify as the back-end service, and the API service is made using graphQL.
+Plush is a full-stack mobile application for pictures sharing. It uses Expo and React Native for the front end, AWS Amplify as the back-end service, and the API service is built with GraphQL.
 
 ## Overview
 
@@ -82,18 +82,19 @@ npm install aws-amplify aws-amplify-react-native
 amplify init
 ```
 
-Follow the same instructions as below.
+4. Follow the same instructions as below.
 
 <img width="561" alt="init" src="https://user-images.githubusercontent.com/26605247/54110565-98152e80-43d9-11e9-9eed-e728cbf2ecd6.png">
 
-4. Configure an Amazon Cognito User Pool to store users credentials.
+5. Configure an Amazon Cognito User Pool to store users credentials.
+
 ```
 amplify add auth
 
 # When prompt, choose: Yes, use the default configuration.
 ```
 
-5. Add an Amazon S3 bucket to store pictures.
+6. Add an Amazon S3 bucket to store pictures.
 
 ```
 amplify add storage
@@ -103,7 +104,7 @@ amplify add storage
 # Give users read/write acces.
 ```
 
-6. Add the AWS AppSync API to use GraphQL and store data in DynammoDB.
+7. Add GraphQL API to your project.
 
 ```
 amplify add api
@@ -114,7 +115,49 @@ amplify add api
 # Provide your schema file path: src/graphQL/schema.graphql
 ```
 
-7. Time to deploy your project to the cloud :stuck_out_tongue:.
+ * The schema for this project, located at src/graphQL/schema.graphql, looks like this:
+
+```graphql
+type Picture @model {
+  id: ID!
+  pictureOwnerId: String!
+  pictureOwnerUsername: String!
+  visibility: Visibility
+  file: S3Object
+  likes: [Like] @connection(name: "PictureLikes")
+  flags: [Flag] @connection(name: "PictureFlags")
+}
+
+type Like @model {
+  id: ID!
+  likeOwnerId: String!
+  likeOwnerUsername: String!
+  picture: Picture @connection(name: "PictureLikes")
+}
+
+type Flag @model {
+  id: ID!
+  flagOwnerId: String!
+  flagOwnerUsername: String!
+  picture: Picture @connection(name: "PictureFlags")
+}
+
+type S3Object {
+  bucket: String!
+  region: String!
+  key: String!
+  uri: String!
+}
+
+enum Visibility {
+  public
+  private
+}
+```
+
+ * Picture, Like, and Flag are all DynamoDB tables used to store the data from users input.
+
+8. Time to deploy your project to the cloud :stuck_out_tongue:.
 
 ```
 amplify push
@@ -140,7 +183,8 @@ yarn
 npm install
 ```
 
-2. You will need your AWS IAM credentials before running the application. 
+2. You will need your AWS IAM credentials to access your S3 bucket.
+
  * Copy your access and secret keys in the `src/myKeys.js` file of your project.
 
 ```javascript
@@ -148,11 +192,12 @@ const keys = {
  accessKey: 'blablabla',
  secretKey: 'blablabla',
 }
-export default keys;
+export default keys
 ```
- * Save changes.
 
-3. Time to test the app :rocket:.
+ * Save the changes.
+
+3. Now you are ready to launch and test the app :rocket:.
 
 ```
 expo start --ios
@@ -162,11 +207,11 @@ expo start --ios
 expo start --android
 ```
 
-3. Create a new user.
+4. Create a new user.
 
 * The app uses the Higher Order Component **withAuthenticator** (HOC) from AWS Amplify to perform the authentication flow: sign up, confirm sign up and sign in users.
 
-4. Add and display pictures.
+5. Add and display pictures.
 
 * If the application runs successfully you should be able to press the camera icon, allow access to the device library, and select a picture from your device. This will upload the picture to S3 then make a GraphQL call to enter the record into DynamoDB. 
 
