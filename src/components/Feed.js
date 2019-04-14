@@ -412,7 +412,7 @@ export default ApolloWrapper
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   headerStyle: {
     padding: 8,

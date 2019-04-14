@@ -39,7 +39,7 @@ const client = new AWSAppSyncClient({
 class App extends React.Component {
   render() {
     return (
-      <View style={{ flex: 1, backgroundColor: '#edf1f7' }}>
+      <View style={{ flex: 1, backgroundColor: '#f7edf0' }}>
         <Feed
           options={{
             bucket: S3_BUCKET_NAME,
@@ -51,8 +51,8 @@ class App extends React.Component {
   }
 }
 
-// Wrap the App with Amplify HOC
-const AppWithAuth = withAuthenticator(App, true) // false
+// Wrap the App with Amplify HOC. Set to true if you want to render sing out button
+const AppWithAuth = withAuthenticator(App, false)
 
 export default () => (
   <ApolloProvider client={client}>

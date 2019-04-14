@@ -20,16 +20,17 @@ const Header = (props) => (
 export default Header
 
 const styles = StyleSheet.create({
-  iconStyle: {
-    color: '#5017ae',
-    fontSize: 38
-  },
   headerStyle: {
     flex: 1,
-    padding: 5,
-    marginTop: 30,
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingRight: 5,
+    paddingLeft: 5,
+    marginTop: 35,
+  },
+  iconStyle: {
+    color: '#5017AE',
+    fontSize: 40
   },
 })

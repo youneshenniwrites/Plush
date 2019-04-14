@@ -48,18 +48,18 @@ const PictureCard = ({ pictures, uri, user, toggleLikePicture, optionsPicture } 
       {
         pictures.filter(pic => pic.file.uri === uri)[0].likes.items.length !== 0 &&
         pictures.filter(pic => pic.file.uri === uri)[0].likes.items.filter(obj => obj.likeOwnerId === user).length === 1 &&
-        <LikePictureButton color='#FB7777' toggleLikePicture={toggleLikePicture} />
+        <LikePictureButton color='#FB7777' toggleLikePicture={toggleLikePicture} name='md-heart' likes={pictures} uri={uri} />
       }
       {/* Logged in user did not like this picture */}
       {
         pictures.filter(pic => pic.file.uri === uri)[0].likes.items.length !== 0 &&
         pictures.filter(pic => pic.file.uri === uri)[0].likes.items.filter(obj => obj.likeOwnerId === user).length === 0 &&
-        <LikePictureButton color='#69FB' toggleLikePicture={toggleLikePicture} />
+        <LikePictureButton color='#FB7777' toggleLikePicture={toggleLikePicture} name='md-heart-empty' likes={pictures} uri={uri} />
       }
       {/* Picture has no likes */}
       {
         pictures.filter(pic => pic.file.uri === uri)[0].likes.items.length === 0 &&
-        <LikePictureButton color='#69FB' toggleLikePicture={toggleLikePicture} />
+        <LikePictureButton color='#FB7777' toggleLikePicture={toggleLikePicture} name='md-heart-empty' likes={pictures} uri={uri} />
       }
     </View>
   </Card>
@@ -72,10 +72,10 @@ let width = Dimensions.get('window').width
 const styles = StyleSheet.create({
   cardStyle: {
     flex: 1,
-    backgroundColor: '#d0d9ed',
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20
+    marginBottom: 25
   },
   image: {
     width: width,
@@ -93,6 +93,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     marginLeft: 20,
-    color: '#1f267e'
+    color: '#5017AE'
   },
 })
