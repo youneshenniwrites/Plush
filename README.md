@@ -4,6 +4,10 @@
 
 Plush is a full-stack mobile application for pictures sharing. It uses Expo and React Native for the front end, AWS Amplify as the back-end service, and the API service is built with GraphQL.
 
+## Demo
+
+Demo video of the app functionalities in [here](https://www.youtube.com/watch?v=XRmUAU7hSNs).
+
 ## Overview
 
 After sign up/sign in, users can perform the following:
@@ -41,9 +45,9 @@ After sign up/sign in, users can perform the following:
 * When a user refreshes the feed:
   * An AppSync Client graphql query will request all the current pictures stored in the DynamoDB Picture table.
   
-## How to run this on your local machine?
+## Prerequisites
 
-You need the following tools:
+To run this app on your local machine, you need the following tools:
 
 * [Expo CLI](https://docs.expo.io/versions/latest/workflow/expo-cli/)
   * `npm install -g expo-cli`
@@ -56,7 +60,7 @@ You need the following tools:
   * `npm install -g @aws-amplify/cli`
   * `amplify configure` ([link](https://www.youtube.com/watch?v=fWbM5DLh25U) for a step by step video).
 
-## Configuring the project
+## Configuring the back-end
 
 1. Clone this repo to your local machine.
 
@@ -171,7 +175,7 @@ Do you want to generate code for your newly created GraphQL API: No.
 
 The AWS Amplify CLI will create an Amazon Cognito User Pool and Identity Pool, an Amazon S3 bucket to store each users pictures and an AWS AppSync GraphQL API that uses Amazon DynamoDB to store metadata about the pictures (i.e. bucket name, likes, flags, owner, date of creation ... etc).
 
-# Running the application
+## Running the application
 
 1. Install client dependencies.
 
@@ -219,7 +223,7 @@ expo start --android
 
 * You can like/unlike and flag other users pictures, and delete your own pictures. 
 
-# Want to contribute ?
+## Want to contribute ?
 * If you like this project, help me grow and improve it by sending pull requests :muscle:.
 
 
