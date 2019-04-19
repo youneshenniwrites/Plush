@@ -50,6 +50,7 @@ class Feed extends React.Component {
     likeOwnerId: '',
     pictureOwnerUsername: '',
     likeOwnerUsername: '',
+    refreshing: false
   }
 
   componentDidMount = async () => {
