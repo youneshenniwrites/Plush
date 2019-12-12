@@ -65,7 +65,7 @@ To run this app on your local machine, you need the following tools:
 1. Clone this repo to your local machine.
 
 ```
-git clone https://github.com/jtaylor1989/plush
+git clone https://github.com/yhenni1989/plush
 
 cd plush
 ```
